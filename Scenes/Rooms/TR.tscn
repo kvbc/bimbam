@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://tileset.tres" type="TileSet" id=1]
+[ext_resource path="res://Scripts/Room.gd" type="Script" id=2]
+
+[sub_resource type="RectangleShape2D" id=1]
+extents = Vector2( 29, 101 )
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 65, 28.5 )
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource( 2 )
+
+[node name="TileMap" type="TileMap" parent="."]
+tile_set = ExtResource( 1 )
+format = 1
+tile_data = PoolIntArray( -65530, 0, 0, -65529, 0, 0, -65528, 0, 0, -65527, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0, 5, 0, 0, 6, 0, 0, 9, 0, 0, 10, 0, 0, 11, 0, 0, 12, 0, 0, 13, 0, 0, 14, 0, 0, 15, 0, 0, 65536, 0, 0, 65551, 0, 0, 131072, 0, 0, 131087, 0, 0, 131088, 0, 0, 196608, 0, 0, 196624, 0, 0, 262144, 0, 0, 262160, 0, 0, 327680, 0, 0, 327696, 0, 0, 393216, 0, 0, 393231, 0, 0, 393232, 0, 0, 458752, 0, 0, 458767, 0, 0, 524288, 0, 0, 524289, 0, 0, 524290, 0, 0, 524291, 0, 0, 524292, 0, 0, 524293, 0, 0, 524294, 0, 0, 524295, 0, 0, 524296, 0, 0, 524297, 0, 0, 524298, 0, 0, 524299, 0, 0, 524300, 0, 0, 524301, 0, 0, 524302, 0, 0, 524303, 0, 0 )
+
+[node name="Right" type="Area2D" parent="."]
+position = Vector2( 991, 287 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Right"]
+shape = SubResource( 1 )
+
+[node name="Top" type="Area2D" parent="."]
+position = Vector2( 510, 32 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Top"]
+shape = SubResource( 2 )
