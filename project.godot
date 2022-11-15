@@ -11,7 +11,7 @@ config_version=4
 [application]
 
 config/name="Bimbam"
-run/main_scene="res://Scenes/Rooms/BL.tscn"
+run/main_scene="res://Scenes/Rooms/1x1.tscn"
 config/icon="res://icon.png"
 
 [autoload]

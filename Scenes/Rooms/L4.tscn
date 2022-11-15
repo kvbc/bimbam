@@ -1,0 +1,39 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://tileset.tres" type="TileSet" id=1]
+[ext_resource path="res://Scripts/Room.gd" type="Script" id=2]
+[ext_resource path="res://tileset_exits.tres" type="TileSet" id=3]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource( 2 )
+
+[node name="TileMap" type="TileMap" parent="."]
+tile_set = ExtResource( 1 )
+format = 1
+tile_data = PoolIntArray( 9, 0, 0, 10, 0, 0, 11, 0, 0, 12, 0, 0, 15, 0, 0, 16, 0, 0, 17, 0, 0, 18, 0, 0, 65545, 0, 0, 65554, 0, 0, 131081, 0, 0, 131090, 0, 0, 196617, 0, 0, 196626, 0, 0, 262153, 0, 0, 262162, 0, 0, 327689, 0, 0, 327698, 0, 0, 393225, 0, 0, 393234, 0, 0, 458761, 0, 0, 458770, 0, 0, 524297, 0, 0, 524306, 0, 0, 589824, 0, 0, 589825, 0, 0, 589826, 0, 0, 589827, 0, 0, 589828, 0, 0, 589829, 0, 0, 589830, 0, 0, 589831, 0, 0, 589832, 0, 0, 589833, 0, 0, 589842, 0, 0, 655360, 0, 0, 655378, 0, 0, 720896, 0, 0, 720914, 0, 0, 786432, 0, 0, 786450, 0, 0, 851986, 0, 0, 917522, 0, 0, 983040, 0, 0, 983058, 0, 0, 1048576, 0, 0, 1048594, 0, 0, 1114112, 0, 0, 1114130, 0, 0, 1179648, 0, 0, 1179649, 0, 0, 1179650, 0, 0, 1179651, 0, 0, 1179652, 0, 0, 1179653, 0, 0, 1179654, 0, 0, 1179655, 0, 0, 1179656, 0, 0, 1179657, 0, 0, 1179658, 0, 0, 1179659, 0, 0, 1179660, 0, 0, 1179661, 0, 0, 1179662, 0, 0, 1179663, 0, 0, 1179664, 0, 0, 1179665, 0, 0, 1179666, 0, 0 )
+
+[node name="Exit_Tilemaps" type="Node2D" parent="."]
+
+[node name="Left" type="TileMap" parent="Exit_Tilemaps"]
+self_modulate = Color( 0, 1, 0.109804, 1 )
+tile_set = ExtResource( 3 )
+format = 1
+tile_data = PoolIntArray( 851968, 0, 0, 917504, 0, 0 )
+
+[node name="Up" type="TileMap" parent="Exit_Tilemaps"]
+self_modulate = Color( 1, 0, 0, 1 )
+tile_set = ExtResource( 3 )
+format = 1
+tile_data = PoolIntArray( 13, 0, 0, 14, 0, 0 )
+
+[node name="Right" type="TileMap" parent="Exit_Tilemaps"]
+self_modulate = Color( 0.941176, 0.705882, 0.0784314, 1 )
+tile_set = ExtResource( 3 )
+format = 1
+
+[node name="Down" type="TileMap" parent="Exit_Tilemaps"]
+self_modulate = Color( 0.968627, 0, 1, 1 )
+tile_set = ExtResource( 3 )
+format = 1
+
+[node name="Exits" type="Node2D" parent="."]

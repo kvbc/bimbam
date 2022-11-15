@@ -1,39 +1,41 @@
 extends Node2D
-signal player_entered
 
-var is_exit_open = {}
+var dir_exit = {}
 
-func is_body_player (body):
-	return body is preload("res://Scripts/Player.gd")
-	
 func on_exit_entered (body, area, method):
-	if is_exit_open.get(area, true):
-		if is_body_player(body):
-			ALMain.call(method)
+	if body is preload("res://Scripts/Player.gd"):
+		print(area.global_position.distance_to(body.global_position))
+		print(area.get_parent().get_parent())
+		print(area.name)
+		ALMain.call(method)
 
-func get_exit_area (dir):
-	return {
-		ALMain.Dir.LEFT  : $Left,
-		ALMain.Dir.RIGHT : $Right,
-		ALMain.Dir.UP    : $Top,
-		ALMain.Dir.DOWN  : $Bottom,
-	}[dir]
+func create_exit (dir, tilemap, move_method):
+	var rect = tilemap.get_used_rect()
+	rect.size *= tilemap.cell_size
+	rect.position *= tilemap.cell_size
+	
+	var exit = Area2D.new()
+	exit.position = rect.position + rect.size / 2
+	exit.name = tilemap.name
+	var cs = CollisionShape2D.new()
+	cs.shape = RectangleShape2D.new()
+	cs.shape.extents = rect.size / 2
+	exit.add_child(cs)
+	$Exits.add_child(exit)
+	exit.connect("body_entered", self, "on_exit_entered", [exit, move_method])
+	dir_exit[dir] = exit
 
-func on_player_entered_on_area_exited (body, area):
-	if is_body_player(body):
-		is_exit_open[area] = true
-		area.disconnect("body_exited", self, "on_player_entered_on_area_exited")
-func on_player_entered (from_dir):
-	var area = get_exit_area(from_dir)
-	is_exit_open[area] = false
-	area.connect("body_exited", self, "on_player_entered_on_area_exited", [area])
-
-func _ready ():
-	connect("player_entered", self, "on_player_entered")
-	if (has_node("Left"  )): $Left  .connect("body_entered", self, "on_exit_entered", [$Left,   "MoveLeft"])
-	if (has_node("Right" )): $Right .connect("body_entered", self, "on_exit_entered", [$Right,  "MoveRight"])
-	if (has_node("Top"   )): $Top   .connect("body_entered", self, "on_exit_entered", [$Top,    "MoveTop"])
-	if (has_node("Bottom")): $Bottom.connect("body_entered", self, "on_exit_entered", [$Bottom, "MoveBottom"])
+func has_exit (dir):
+	if (dir == ALMain.Dir.LEFT ): return not $Exit_Tilemaps/Left .get_used_cells().empty()
+	if (dir == ALMain.Dir.RIGHT): return not $Exit_Tilemaps/Right.get_used_cells().empty()
+	if (dir == ALMain.Dir.UP   ): return not $Exit_Tilemaps/Up   .get_used_cells().empty()
+	if (dir == ALMain.Dir.DOWN ): return not $Exit_Tilemaps/Down .get_used_cells().empty()
 
 func GetExitPosition (dir):
-	return get_exit_area(dir).global_position
+	return dir_exit[dir].global_position
+
+func InitRoom (on_left, on_right, on_up, on_down):
+	if (on_left  and has_exit(ALMain.Dir.LEFT )): create_exit(ALMain.Dir.LEFT,  $Exit_Tilemaps/Left,  "MoveLeft")
+	if (on_right and has_exit(ALMain.Dir.RIGHT)): create_exit(ALMain.Dir.RIGHT, $Exit_Tilemaps/Right, "MoveRight")
+	if (on_up    and has_exit(ALMain.Dir.UP   )): create_exit(ALMain.Dir.UP,    $Exit_Tilemaps/Up,    "MoveTop")
+	if (on_down  and has_exit(ALMain.Dir.DOWN )): create_exit(ALMain.Dir.DOWN,  $Exit_Tilemaps/Down,  "MoveBottom")
