@@ -3,10 +3,7 @@ extends Node2D
 var dir_exit = {}
 
 func on_exit_entered (body, area, method):
-	if body is preload("res://Scripts/Player.gd"):
-		print(area.global_position.distance_to(body.global_position))
-		print(area.get_parent().get_parent())
-		print(area.name)
+	if ALMain.IsBodyPlayer(body):
 		ALMain.call(method)
 
 func create_exit (dir, tilemap, move_method):
@@ -30,6 +27,33 @@ func has_exit (dir):
 	if (dir == ALMain.Dir.RIGHT): return not $Exit_Tilemaps/Right.get_used_cells().empty()
 	if (dir == ALMain.Dir.UP   ): return not $Exit_Tilemaps/Up   .get_used_cells().empty()
 	if (dir == ALMain.Dir.DOWN ): return not $Exit_Tilemaps/Down .get_used_cells().empty()
+
+func _ready ():
+	var bullets = Node2D.new()
+	bullets.name = "Bullets"
+	add_child(bullets)
+	
+	var exits = Node2D.new()
+	exits.name = "Exits"
+	add_child(exits)
+	
+	var enemies = Node2D.new()
+	enemies.name = "Enemies"
+	add_child(enemies)
+	
+	if has_node("EnemySpawns"):
+		for enemy_group in $EnemySpawns.get_children():
+			for pos2d in enemy_group.get_children():
+				var enemy = preload("res://Scenes/Enemy.tscn").instance()
+				enemy.global_position = pos2d.global_position
+				enemy.Init(ALMain.EnemyNameToType(enemy_group.name))
+				enemies.add_child(enemy)
+
+func SpawnBullet (pos:Vector2, velocity:Vector2, damage:int):
+	var bullet = preload("res://Scenes/Bullet.tscn").instance()
+	bullet.global_position = pos
+	bullet.Init(velocity, damage)
+	$Bullets.add_child(bullet)
 
 func GetExitPosition (dir):
 	return dir_exit[dir].global_position
