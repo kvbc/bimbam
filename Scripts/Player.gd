@@ -1,4 +1,7 @@
 extends KinematicBody2D
+signal damaged
+
+onready var health = ALMain.PLAYER_MAX_HP # in hearts
 
 func on_iframes_timeout ():
 	$iframes.stop()
@@ -33,3 +36,8 @@ func _process (delta):
 func Damage (dmg):
 	if $iframes.is_stopped():
 		$iframes.start()
+		health -= dmg
+		emit_signal("damaged")
+
+func GetHealth ():
+	return health

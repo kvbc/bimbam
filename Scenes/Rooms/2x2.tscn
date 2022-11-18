@@ -42,18 +42,74 @@ tile_data = PoolIntArray( 1114120, 0, 0, 1114121, 0, 0 )
 
 [node name="EnemySpawns" type="Node2D" parent="."]
 
-[node name="Menel" type="Node2D" parent="EnemySpawns"]
+[node name="Left" type="Node2D" parent="EnemySpawns"]
 
-[node name="1" type="Position2D" parent="EnemySpawns/Menel"]
-position = Vector2( 221, 240 )
+[node name="Menel" type="Node2D" parent="EnemySpawns/Left"]
 
-[node name="2" type="Position2D" parent="EnemySpawns/Menel"]
-position = Vector2( 914, 923 )
+[node name="1" type="Position2D" parent="EnemySpawns/Left/Menel"]
+position = Vector2( 890, 216 )
 
-[node name="Crackhead" type="Node2D" parent="EnemySpawns"]
+[node name="2" type="Position2D" parent="EnemySpawns/Left/Menel"]
+position = Vector2( 874, 923 )
 
-[node name="1" type="Position2D" parent="EnemySpawns/Crackhead"]
-position = Vector2( 140, 148 )
+[node name="Crackhead" type="Node2D" parent="EnemySpawns/Left"]
 
-[node name="2" type="Position2D" parent="EnemySpawns/Crackhead"]
-position = Vector2( 998, 1009 )
+[node name="1" type="Position2D" parent="EnemySpawns/Left/Crackhead"]
+position = Vector2( 989, 145 )
+
+[node name="2" type="Position2D" parent="EnemySpawns/Left/Crackhead"]
+position = Vector2( 986, 1022 )
+
+[node name="Right" type="Node2D" parent="EnemySpawns"]
+
+[node name="Menel" type="Node2D" parent="EnemySpawns/Right"]
+
+[node name="1" type="Position2D" parent="EnemySpawns/Right/Menel"]
+position = Vector2( 203, 221 )
+
+[node name="2" type="Position2D" parent="EnemySpawns/Right/Menel"]
+position = Vector2( 216, 936 )
+
+[node name="Crackhead" type="Node2D" parent="EnemySpawns/Right"]
+
+[node name="1" type="Position2D" parent="EnemySpawns/Right/Crackhead"]
+position = Vector2( 140, 1028 )
+
+[node name="2" type="Position2D" parent="EnemySpawns/Right/Crackhead"]
+position = Vector2( 125, 138 )
+
+[node name="Up" type="Node2D" parent="EnemySpawns"]
+
+[node name="Menel" type="Node2D" parent="EnemySpawns/Up"]
+
+[node name="1" type="Position2D" parent="EnemySpawns/Up/Menel"]
+position = Vector2( 874, 925 )
+
+[node name="2" type="Position2D" parent="EnemySpawns/Up/Menel"]
+position = Vector2( 216, 936 )
+
+[node name="Crackhead" type="Node2D" parent="EnemySpawns/Up"]
+
+[node name="1" type="Position2D" parent="EnemySpawns/Up/Crackhead"]
+position = Vector2( 985, 1022 )
+
+[node name="2" type="Position2D" parent="EnemySpawns/Up/Crackhead"]
+position = Vector2( 140, 1026 )
+
+[node name="Down" type="Node2D" parent="EnemySpawns"]
+
+[node name="Menel" type="Node2D" parent="EnemySpawns/Down"]
+
+[node name="1" type="Position2D" parent="EnemySpawns/Down/Menel"]
+position = Vector2( 887, 218 )
+
+[node name="2" type="Position2D" parent="EnemySpawns/Down/Menel"]
+position = Vector2( 204, 225 )
+
+[node name="Crackhead" type="Node2D" parent="EnemySpawns/Down"]
+
+[node name="1" type="Position2D" parent="EnemySpawns/Down/Crackhead"]
+position = Vector2( 989, 141 )
+
+[node name="2" type="Position2D" parent="EnemySpawns/Down/Crackhead"]
+position = Vector2( 127, 138 )

@@ -1,13 +1,10 @@
 extends KinematicBody2D
 
-const RAYS = 10
-const RAY_LENGTH = 150
-
 var type
 var is_player_in_range = false
 var can_attack = true
 var can_shoot = false
-var rays = []
+var steering_ray_dirs = []
 
 func on_AttackTimer_timeout ():
 	can_attack = true
@@ -33,8 +30,8 @@ func _ready ():
 	$ShootArea2D.connect("body_exited", self, "on_ShootArea2D_body_exited")
 	$AttackTimer.connect("timeout", self, "on_AttackTimer_timeout")
 	
-	for i in RAYS:
-		rays.append(Vector2.UP.rotated(deg2rad(360 / RAYS * i)))
+	for i in ALMain.ENEMY_STEERING_RAYS:
+		steering_ray_dirs.append(Vector2.RIGHT.rotated(deg2rad(360 / ALMain.ENEMY_STEERING_RAYS * i)))
 
 func _process (delta):
 	var plr_dir = global_position.direction_to(ALMain.GetPlayer().global_position)
@@ -56,42 +53,31 @@ func _process (delta):
 						ALMain.GetCurrentRoomScene().SpawnBullet(global_position, plr_dir, ALMain.GetEnemyData(type).bullet_damage)
 				else:
 					move = true
-
 	
+	var avoid_dir = Vector2.ZERO
+	for body in $Area2D.get_overlapping_bodies():
+		if ALMain.IsBodyPlayer(body):
+			ALMain.GetPlayer().Damage(ALMain.GetEnemyData(type).contact_damage)
+		elif body != self:
+			avoid_dir -= global_position.direction_to(body.global_position)
+
 	if move:
 		var new_pos = global_position + move_dir * ALMain.GetEnemyData(type).move_speed * delta
 		
-		var closest_ray_idx = -1
-		for idx in rays.size():
-			if closest_ray_idx < 0 or (global_position + rays[idx]).distance_to(new_pos) < (global_position + rays[closest_ray_idx]).distance_to(new_pos):
-				closest_ray_idx = idx
-				
-#		var indices = [closest_ray_idx]
-#		var is_next_ray = closest_ray_idx + 1 < rays.size()
-#		var is_prev_ray = closest_ray_idx - 1 > 0
-#		var next_ray = rays[closest_ray_idx + 1] if is_next_ray else Vector2.ZERO
-#		var prev_ray = rays[closest_ray_idx - 1] if is_prev_ray else Vector2.ZERO
-#		var next_ray_distance = (global_position + next_ray).distance_to(new_pos)
-#		var prev_ray_distance = (global_position + prev_ray).distance_to(new_pos)
-#		if next_ray_distance < prev_ray_distance:
-#			indices.append_array(range(closest_ray_idx + 1, rays.size()))
-#			indices.append_array(range(closest_ray_idx - 1, 0, -1))
-#		else:
-#			indices.append_array(range(closest_ray_idx - 1, 0, -1))
-#			indices.append_array(range(closest_ray_idx + 1, rays.size()))
-		var indices = [closest_ray_idx]
-		indices.append_array(range(closest_ray_idx + 1, rays.size()))
-		indices.append_array(range(closest_ray_idx - 1, 0, -1))
+		var closest_steering_ray_idx = round(rad2deg(move_dir.angle()) / (360 / ALMain.ENEMY_STEERING_RAYS))
+		var steering_ray_indices = [closest_steering_ray_idx]
+		steering_ray_indices.append_array(range(closest_steering_ray_idx + 1, ALMain.ENEMY_STEERING_RAYS))
+		steering_ray_indices.append_array(range(closest_steering_ray_idx - 1, 0, -1))
 		
-		for idx in indices:
-			var ray = rays[idx]
-			if get_world_2d().direct_space_state.intersect_ray(global_position, global_position + ray * RAY_LENGTH, [self]).empty():
-				var collision = move_and_collide(ray * ALMain.GetEnemyData(type).move_speed * delta)
-				if collision:
-					if ALMain.IsBodyPlayer(collision.collider):
-						ALMain.GetPlayer().Damage(ALMain.GetEnemyData(type).contact_damage)
+		move_dir = avoid_dir
+		
+		for idx in steering_ray_indices:
+			var ray_dir = steering_ray_dirs[idx]
+			if get_world_2d().direct_space_state.intersect_ray(global_position, global_position + ray_dir * ALMain.ENEMY_STEERING_RAY_LENGTH, [self]).empty():
+				move_dir = ray_dir
 				break
-			
+				
+		move_and_collide(move_dir * ALMain.GetEnemyData(type).move_speed * delta)
 
 func Init (enemy_type):
 	type = enemy_type

@@ -5,7 +5,7 @@ var damage # in hearts
 
 func on_body_entered (body):
 	if ALMain.IsBodyPlayer(body):
-		body.Damage(damage)
+		ALMain.GetPlayer().Damage(damage)
 
 func _ready ():
 	$Area2D.connect("body_entered", self, "on_body_entered")

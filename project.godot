@@ -11,13 +11,13 @@ config_version=4
 [application]
 
 config/name="Bimbam"
-run/main_scene="res://Scenes/Rooms/1x1.tscn"
+run/main_scene="res://Scenes/Player.tscn"
 config/icon="res://icon.png"
 
 [autoload]
 
 ALMain="*res://Scripts/AL_Main.gd"
-ALMinimap="*res://Scenes/AL_Minimap.tscn"
+ALHUD="*res://Scenes/AL_HUD.tscn"
 
 [input]
 
