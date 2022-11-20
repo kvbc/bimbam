@@ -8,16 +8,16 @@
 script = ExtResource( 3 )
 
 [node name="Minimap" type="Control" parent="."]
+anchor_left = 1.0
 anchor_right = 1.0
-anchor_bottom = 1.0
+margin_left = -303.0
+margin_bottom = 285.0
 script = ExtResource( 1 )
 
 [node name="ColorRect" type="ColorRect" parent="Minimap"]
 self_modulate = Color( 1, 1, 1, 0.505882 )
-anchor_left = 1.0
 anchor_right = 1.0
-margin_left = -297.0
-margin_bottom = 283.0
+anchor_bottom = 1.0
 rect_clip_content = true
 color = Color( 0.188235, 0.156863, 0.156863, 1 )
 
