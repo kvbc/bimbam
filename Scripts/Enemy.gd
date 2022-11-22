@@ -62,8 +62,6 @@ func _process (delta):
 			avoid_dir -= global_position.direction_to(body.global_position)
 
 	if move:
-		var new_pos = global_position + move_dir * ALMain.GetEnemyData(type).move_speed * delta
-		
 		var closest_steering_ray_idx = round(rad2deg(move_dir.angle()) / (360 / ALMain.ENEMY_STEERING_RAYS))
 		var steering_ray_indices = [closest_steering_ray_idx]
 		steering_ray_indices.append_array(range(closest_steering_ray_idx + 1, ALMain.ENEMY_STEERING_RAYS))

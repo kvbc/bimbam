@@ -14,6 +14,6 @@ func _ready ():
 func _process (delta):
 	position += velocity * ALMain.BULLET_SPEED * delta
 
-func Init (_velocity:Vector2, _damage:int):
+func Init (_velocity:Vector2, _damage:float):
 	velocity = _velocity
 	damage = _damage

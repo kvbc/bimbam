@@ -9,6 +9,7 @@ func on_iframes_timeout ():
 func _ready ():
 	$iframes.wait_time = ALMain.PLAYER_IFRAMES
 	$iframes.connect("timeout", self, "on_iframes_timeout")
+	$BodyAnimationPlayer.play("Walk")
 
 func _process (delta):
 	var move = Vector2.ZERO
@@ -21,15 +22,16 @@ func _process (delta):
 	if Input.is_action_pressed("DOWN"):
 		move.y += Vector2.DOWN.y
 		
-	if move.x == Vector2.LEFT.x:
-		$Sprite.flip_h = true
-	elif move.x == Vector2.RIGHT.x:
-		$Sprite.flip_h = false
+	if Input.is_action_just_pressed("LEFT"):
+		$Flip.scale.x = -1
+	if Input.is_action_just_pressed("RIGHT"):
+		$Flip.scale.x = 1
 		
 	if move == Vector2.ZERO:
-		$AnimationPlayer.stop()
-	elif not $AnimationPlayer.is_playing():
-		$AnimationPlayer.play("Walk")
+		$LegsAnimationPlayer.stop()
+		# $LegsAnimationPlayer.seek(0, true)
+	elif not $LegsAnimationPlayer.is_playing():
+		$LegsAnimationPlayer.play("Walk")
 		
 	move_and_collide(move * ALMain.PLAYER_SPEED * delta)
 
