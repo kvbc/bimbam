@@ -6,8 +6,9 @@ const PLAYER_IFRAMES = 0.5 # in seconds
 const PLAYER_MAX_HP = 3 # in hearts
 const PLAYER_HAND_RANGE = 200
 
-const ENEMY_STEERING_RAYS = 20
-const ENEMY_STEERING_RAY_LENGTH = 150
+const ENEMY_IFRAMES = 1 # in seconds
+const ENEMY_FLEE_RADIUS = 150
+const ENEMY_SHOOT_RADIUS = 300
 
 const BULLET_SPEED = 300
 const BULLET_LIFETIME = 5.0 # in seconds
@@ -29,6 +30,8 @@ enum SettingType {
 	SHOW_INTERIOR_ROOM_TILES,
 	SHOW_COLLISION_SHAPES,
 	SHOW_ENEMY_STEERING_RAYS,
+	SHOW_ENEMY_FLEE_AREA,
+	SHOW_ENEMY_SHOOT_AREA,
 	RESOLUTION,
 	VSYNC,
 	SHOW_FPS
@@ -152,7 +155,6 @@ var current_room_scene : Node = null
 var player = null
 var is_paused = false
 var settings = {} # SettingType -> value
-var debug_font = null # generated in _ready()
 var enemy_data = {
 	EnemyType.MENEL    : EnemyData.new(250, 0.5, 0.0, 1),
 	EnemyType.CRACKHEAD: EnemyData.new(250, 0.5, 0.5, 1),
@@ -255,10 +257,6 @@ func on_player_damaged ():
 	ALHUD.GetHPDisplay().Update(player.GetHealth())
 
 func _ready ():
-	debug_font = DynamicFont.new()
-	debug_font.font_data = preload("res://Milky Boba.ttf")
-	debug_font.size = 64
-	
 	# auto-generate a list of room types
 	# based on filenames of all the room scenes
 	var room_scene_names = []
@@ -321,8 +319,11 @@ func _process (_delta):
 #
 #
 
-func GetDebugFont ():
-	return debug_font
+func GetDebugFont (size):
+	var font = DynamicFont.new()
+	font.font_data = preload("res://Assets/Fonts/Milky Boba.ttf")
+	font.size = size
+	return font
 
 func GetSetting (setting_type, default_value = null):
 	return settings.get(setting_type, default_value)
@@ -358,6 +359,8 @@ func GetSettingName (setting_type):
 		SettingType.SHOW_INTERIOR_ROOM_TILES : "show interior room tiles",
 		SettingType.SHOW_COLLISION_SHAPES    : "show collision shapes",
 		SettingType.SHOW_ENEMY_STEERING_RAYS : "show enemy steering rays",
+		SettingType.SHOW_ENEMY_FLEE_AREA     : "show enemy flee area",
+		SettingType.SHOW_ENEMY_SHOOT_AREA    : "show enemy shoot area",
 		SettingType.RESOLUTION               : "resolution",
 		SettingType.VSYNC                    : "VSync",
 		SettingType.SHOW_FPS				 : "show FPS"
@@ -370,6 +373,8 @@ func GetSettingValues (setting_type):
 		SettingType.SHOW_INTERIOR_ROOM_TILES : ["no", "yes"],
 		SettingType.SHOW_COLLISION_SHAPES    : ["no", "yes"],
 		SettingType.SHOW_ENEMY_STEERING_RAYS : ["no", "yes"],
+		SettingType.SHOW_ENEMY_FLEE_AREA     : ["no", "yes"],
+		SettingType.SHOW_ENEMY_SHOOT_AREA    : ["no", "yes"],
 		SettingType.RESOLUTION               : ["1920x1080", "1280x1024", "1366x768", "1600x900"],
 		SettingType.VSYNC                    : ["on", "off"],
 		SettingType.SHOW_FPS				 : ["no", "yes"]

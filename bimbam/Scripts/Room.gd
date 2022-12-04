@@ -5,8 +5,6 @@ var room : ALMain.MapRoom = null
 var chunk_positions = null
 var interior_tile_positions = []
 var pathfinding = FlowFieldPathfinding.new()
-# DEBUG
-var debug_astar_path = []
 
 func get_grouped_tilemap_rects (tilemap):
 	var rects = []
@@ -25,7 +23,7 @@ func get_grouped_tilemap_rects (tilemap):
 		rects.append(rect)
 	return rects
 
-func on_exit_entered (body, area, method, chunk : ALMain.RoomChunk):
+func on_exit_entered (body, method, chunk : ALMain.RoomChunk):
 	if ALMain.IsBodyPlayer(body):
 		ALMain.call(method, chunk)
 
@@ -56,7 +54,7 @@ func create_exit (dir, tilemap, move_method):
 			cs.shape.extents = exit_rect.size / 2
 			exit.add_child(cs)
 			$Exits.add_child(exit)
-			exit.connect("body_entered", self, "on_exit_entered", [exit, move_method, chunk])
+			exit.connect("body_entered", self, "on_exit_entered", [move_method, chunk])
 	
 func _ready ():
 	var rect = $TileMap.get_used_rect()
@@ -92,6 +90,7 @@ func _ready ():
 func _draw ():
 	if room == null: # uninitialized
 		return
+	var tile_size = $TileMap.cell_size
 	if ALMain.GetSetting(ALMain.SettingType.SHOW_ROOM_CHUNKS) == "yes":
 		var tiles_per_chunk = ALMain.GetRoomTilesPerChunk() * Vector2.ONE
 		for chunk_pos in GetChunkPositions():
@@ -99,10 +98,10 @@ func _draw ():
 			var rect = Rect2(world_pos, ChunkToWorldPosition(Vector2.ONE))
 			draw_rect(rect, Color.red, false, 5)
 			
-			var font = ALMain.GetDebugFont()
+			var font = ALMain.GetDebugFont(128)
 			var string = str(chunk_pos)
 			var str_size = font.get_string_size(string)
-			draw_string(font, world_pos + TileToWorldPosition(tiles_per_chunk/2) - str_size/2, string, Color.red)
+			draw_string(font, world_pos + TileToWorldPosition(tiles_per_chunk/2) + tile_size/2 + Vector2(-str_size.x, str_size.y)/2, string, Color.red)
 	if ALMain.GetSetting(ALMain.SettingType.SHOW_INTERIOR_ROOM_TILES) == "yes":
 		for tile_pos in interior_tile_positions:
 			var rect = Rect2(
@@ -111,7 +110,6 @@ func _draw ():
 			)
 			draw_rect(rect, Color.red, false)
 	if ALMain.GetSetting(ALMain.SettingType.SHOW_ROOM_PATHFINDING) == "yes":
-		var tile_size = $TileMap.cell_size
 		for x in pathfinding.GetWidth():
 			for y in pathfinding.GetHeight():
 				var tile_pos = Vector2(x, y)
@@ -172,18 +170,18 @@ func on_setting_changed (setting_type, new_value):
 	]:
 		update()
 
+func update_pathfinding_loop ():
+	while true:
+		if ALMain.GetPlayer() != null:
+			pathfinding.Update(WorldToTilePosition(ALMain.GetPlayer().global_position))
+			update()
+		yield(get_tree().create_timer(0.1), "timeout")
+		
 #
 #
 # PUBLIC
 #
 #
-
-func DEBUG_TEST ():
-	while true:
-		if ALMain.GetPlayer():
-			pathfinding.Update(WorldToTilePosition(ALMain.GetPlayer().global_position))
-			update()
-		yield(get_tree().create_timer(0.1), "timeout")
 
 func Init (
 	_room : ALMain.MapRoom,
@@ -223,7 +221,7 @@ func Init (
 							enemy.Init(ALMain.EnemyNameToType(enemy_group.name))
 							enemies.add_child(enemy)
 							
-	DEBUG_TEST()
+	update_pathfinding_loop()
 
 func SpawnBullet (world_pos:Vector2, velocity:Vector2, damage:float):
 	var bullet = preload("res://Scenes/Bullet.tscn").instance()
@@ -246,17 +244,14 @@ func WorldToChunkPosition (world_pos:Vector2): return TileToChunkPosition(WorldT
 func RegisterPathfindingAgent (world_pos):
 	var tile_pos = WorldToTilePosition(world_pos)
 	return pathfinding.RegisterAgent(tile_pos.x, tile_pos.y)
-
 func UpdatePathfindingAgent (id, world_pos):
 	var tile_pos = WorldToTilePosition(world_pos)
 	pathfinding.UpdateAgent(id, tile_pos.x, tile_pos.y)
-
 func GetNextPathfindingAgentPosition (id):
 	var tile_pos = pathfinding.GetNextAgentPosition(id)
 	if tile_pos == Vector2(-1, -1):
 		return null
 	return TileToWorldPosition(tile_pos) + $TileMap.cell_size / 2
-
 func RemovePathfindingAgent (agent_id):
 	pathfinding.RemoveAgent(agent_id)
 

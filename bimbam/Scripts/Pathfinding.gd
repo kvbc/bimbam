@@ -1,3 +1,14 @@
+#
+# Old pathfinding algorithms, both of which suffer greatly from performance issues
+# The current pathfinding implementation resides in the /modules directory and is written in C++
+#
+
+#####################################################################################
+#
+# CUSTOM A*
+#
+#####################################################################################
+
 #extends AStar2D
 #class_name Pathfinding
 #
@@ -149,11 +160,11 @@
 #		points.append_array(path)
 #	return points
 
+#####################################################################################
 #
+# CUSTOM FLOW FIELD
 #
-# FLOW FIELD
-#
-#
+#####################################################################################
 
 #class_name Pathfinding
 #

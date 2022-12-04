@@ -1,7 +1,8 @@
 extends KinematicBody2D
 signal damaged
 
-var is_hand_retracting = false
+const ATTACK_ANGLE = 90
+
 var is_attacking = false
 var is_attack_retracting = false
 var target_hand_deg = 0
@@ -10,21 +11,23 @@ onready var health = ALMain.PLAYER_MAX_HP # in hearts
 func on_iframes_timeout ():
 	$iframes.stop()
 
-func on_weapon_body_entered (body):
+func attempt_to_attack_body (body):
 	if body is preload("res://Scripts/Enemy.gd"):
 		if is_attacking:
-			body.Damage(0.5)
+			var hit = body.Hit(0.5, global_position.direction_to(get_global_mouse_position()))
+			if hit and not $HitSound.is_playing():
+				$HitSound.play()
 
 func _ready ():
 	$iframes.wait_time = ALMain.PLAYER_IFRAMES
 	$iframes.connect("timeout", self, "on_iframes_timeout")
 	$BodyAnimationPlayer.play("Walk")
-	$HandsLook/HandsAttack/Right/Weapon.connect("body_entered", self, "on_weapon_body_entered")
+	$HandsLook/HandsAttack/Right/Weapon.connect("body_entered", self, "attempt_to_attack_body")
 	
 func _process (delta):
 	var wpn_deg = 0
 	var mouse_pos = get_global_mouse_position()
-	var attack_angle = 45
+	var attack_angle = ATTACK_ANGLE
 	if mouse_pos.x < global_position.x:
 		$HandsLook/HandsAttack/Left/Sprite.flip_h = true
 		$HandsLook/HandsAttack/Right/Sprite.flip_h = true
@@ -38,16 +41,27 @@ func _process (delta):
 		if not is_attacking:
 			is_attacking = true
 			target_hand_deg = attack_angle
+			$AttackSound.play()
+			for body in $HandsLook/HandsAttack/Right/Weapon.get_overlapping_bodies():
+				attempt_to_attack_body(body)
 	
 	if is_attacking and not is_attack_retracting:
-		wpn_deg += 180
+		wpn_deg += attack_angle
 	
-	$HandsLook.rotation = lerp_angle($HandsLook.rotation, $HandsLook.global_position.direction_to(mouse_pos).angle(), 0.5)
-	$HandsLook/HandsAttack.rotation = lerp_angle($HandsLook/HandsAttack.rotation, deg2rad(target_hand_deg), 0.2)
+	$HandsLook.rotation = lerp_angle(
+		$HandsLook.rotation,
+		$HandsLook.global_position.direction_to(mouse_pos).angle(),
+		delta * 25
+	)
+	$HandsLook/HandsAttack.rotation = lerp_angle(
+		$HandsLook/HandsAttack.rotation,
+		deg2rad(target_hand_deg),
+		delta * 15
+	)
 	$HandsLook/HandsAttack/Right/Weapon.rotation = lerp_angle(
 		$HandsLook/HandsAttack/Right/Weapon.rotation + (1.0 / (1 << 31)), # so rotation > 0 and it goes to the right
 		deg2rad(wpn_deg),
-		0.2
+		delta * 15
 	)
 		
 	if ALUtil.AngleDistance(target_hand_deg, $HandsLook/HandsAttack.rotation_degrees) < 5:
@@ -80,6 +94,12 @@ func _process (delta):
 		
 	move_and_collide(move * ALMain.PLAYER_SPEED * delta)
 
+#
+#
+# PUBLIC
+#
+#
+
 func Damage (dmg):
 	if $iframes.is_stopped():
 		$iframes.start()
@@ -91,3 +111,6 @@ func Damage (dmg):
 
 func GetHealth ():
 	return health
+
+func GetPosition ():
+	return global_position

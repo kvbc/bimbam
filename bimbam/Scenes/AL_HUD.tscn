@@ -3,8 +3,8 @@
 [ext_resource path="res://Scripts/HUD/Minimap.gd" type="Script" id=1]
 [ext_resource path="res://Scripts/HUD/HPDisplay.gd" type="Script" id=2]
 [ext_resource path="res://Scripts/HUD/AL_HUD.gd" type="Script" id=3]
-[ext_resource path="res://tileset_minimap.tres" type="TileSet" id=4]
-[ext_resource path="res://Milky Boba.ttf" type="DynamicFontData" id=5]
+[ext_resource path="res://Assets/tileset_minimap.tres" type="TileSet" id=4]
+[ext_resource path="res://Assets/Fonts/Milky Boba.ttf" type="DynamicFontData" id=5]
 [ext_resource path="res://Scripts/HUD/FPSLabel.gd" type="Script" id=6]
 
 [sub_resource type="DynamicFont" id=1]
