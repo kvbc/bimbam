@@ -1,5 +1,10 @@
 # Klasy
 - Tank
+    - Specjalna umiejętność: toczenie się
+    - Po kliknięciu przycisku specjalnej umiejętności czas zostaje spowolniony. Gracz ma kilka sekund na wybranie kierunku w którym ma zamiar się toczyć.
+    - Po ponownym kliknięciu przycisku specjalnej umiejętności gracz zostaje wystrzelony w wybranym kierunku oraz czas wraca do normy.
+    - Gracz może odbić się od ściany tylko jeden raz
+    - Gracz, po wtoczeniu się w przeciwnika, odpycha go, oraz kontynuuje toczenie się do momentu kolizji ze ścianą
 - Inżynier
 - Łotr
 - Summoner
@@ -9,7 +14,7 @@
 	  Aczkolwiek, w przypadku klasy Summonera, gracz posiadałby zdolność manualnego kontrolowania swojego kompana, atakując nim znacznie szybciej i posługując się nim o wiele efektywniej niż jakakolwiek inna klasa.
 	- Sposób kontroli nad kompanem nie jest jeszcze ustalony, poniżej podane są potencjalne sugestie:
 	  -  Gracz przy użyciu specjalnego przycisku kompletnie oddałby się kontroli kompana oraz pozostawił swoje ciało całkowicie bezbronne
-	  - Gracz jednocześnie kontrolując swoją postać, kontrolował by także kompana w ustalonym promieniu od swojej postaci
+	  - Gracz kontrolując swoją postać, jednocześnie kontrolował by także kompana w ustalonym promieniu od swojej postaci
 - Gangster
 - Bomber
 	- Specjalna umiejętność: detonuje wyrzuconą broń
@@ -22,5 +27,5 @@
 	 - Ideę można rozszerzyć poprzez modyfikację eksplozji według typu broni, np:
 	   - bronie heavy - większy zasięg i obrażenia eksplozji, lecz znacznie mniejsza prędkość wyrzutu
 	   - bronie light - mniejszy zasięg i obrażenia eksplozji, lecz znacznie większa prędkość wyrzutu
-	   - bronie summon - eksplozją wypuszcza pomniejsze minionki
+	   - bronie summon - eksplozją wypuszcza pomniejsze minionki  
 	   i tym podobne...
