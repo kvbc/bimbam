@@ -1,5 +1,5 @@
 #
-# Old pathfinding algorithms, both of which suffer greatly from performance issues
+# Old pathfinding algorithms, both of which suffered greatly from performance issues
 # The current pathfinding implementation resides in the /modules directory and is written in C++
 #
 

@@ -1,16 +1,19 @@
+#
+# TODO: Improve room generation
+#
+
 extends Node
 signal setting_changed
 
-const PLAYER_SPEED = 500
+const PLAYER_SPEED = 10
 const PLAYER_IFRAMES = 0.5 # in seconds
 const PLAYER_MAX_HP = 3 # in hearts
-const PLAYER_HAND_RANGE = 200
 
 const ENEMY_IFRAMES = 1 # in seconds
-const ENEMY_FLEE_RADIUS = 150
-const ENEMY_SHOOT_RADIUS = 300
+const ENEMY_FLEE_RADIUS = 2.5
+const ENEMY_SHOOT_RADIUS = 5
 
-const BULLET_SPEED = 300
+const BULLET_SPEED = 10
 const BULLET_LIFETIME = 5.0 # in seconds
 
 const MAX_MAP_DEPTH = 15
@@ -27,7 +30,6 @@ const MINIMAP_ZOOM_SENSITIVITY = 1
 enum SettingType {
 	SHOW_ROOM_CHUNKS,
 	SHOW_ROOM_PATHFINDING,
-	SHOW_INTERIOR_ROOM_TILES,
 	SHOW_COLLISION_SHAPES,
 	SHOW_ENEMY_STEERING_RAYS,
 	SHOW_ENEMY_FLEE_AREA,
@@ -42,6 +44,12 @@ enum SettingType {
 # Enemy
 #
 #
+
+enum EnemyType {
+	MENEL,
+	CRACKHEAD,
+	SKIN
+}
 
 class EnemyData:
 	var contact_damage : float # in hearts
@@ -59,12 +67,6 @@ class EnemyData:
 	func GetMoveSpeed     (): return move_speed
 	func GetBulletDamage  (): return bullet_damage
 	func GetMaxHealth     (): return max_health
-
-enum EnemyType {
-	MENEL,
-	CRACKHEAD,
-	SKIN
-}
 
 #
 #
@@ -130,6 +132,9 @@ class MapRoom:
 		pos = Vector2(_x, _y)
 		chunks = {}
 		
+	func GetType ():
+		return type
+		
 	func GetChunks ():
 		return chunks.values()
 		
@@ -149,43 +154,41 @@ class MapRoom:
 #
 
 var xy_rooms = {} # vec2 -> MapRoom
-var map = MapRoom.new("donut", 0, 0) # first MapRoom
+var map = MapRoom.new("2x2", 0, 0) # first MapRoom
 var current_room : MapRoom = null
 var current_room_scene : Node = null
 var player = null
 var is_paused = false
 var settings = {} # SettingType -> value
+var physics_layers = []
 var enemy_data = {
-	EnemyType.MENEL    : EnemyData.new(250, 0.5, 0.0, 1),
-	EnemyType.CRACKHEAD: EnemyData.new(250, 0.5, 0.5, 1),
-	EnemyType.SKIN     : EnemyData.new(250, 0.5, 0.0, 1)
+	EnemyType.MENEL    : EnemyData.new(5, 0.5, 0.0, 1),
+	EnemyType.CRACKHEAD: EnemyData.new(5, 0.5, 0.5, 1),
+	EnemyType.SKIN     : EnemyData.new(5, 0.5, 0.0, 1)
 }
 #
-# Below room cache variables are auto-generated in _ready() 
+# Below room variables are auto-generated in _ready() 
 #
-var room_chunk_positions   = {} # room type     -> room's chunk positions[]
-var room_types             = {} # room exit dir -> room types[] that have exit on that direction
-var room_wall_tile_offsets = {} # room type     -> room wall tile offsets[]
-var room_chunk_exit_dirs   = {} # room type     -> room's chunk position   -> exit directions[]
-var room_tile_sizes        = {} # room type     -> room's size in tiles
-var room_chunk_exit_tile_offsets = {}
-var room_interior_tile_offsets = {}
+var room_static_data = {} # room type -> Room.StaticData
+var room_possible_dir_types = {} # dir -> room types[]
 var room_tiles_per_chunk   = null
 
 func expand_room (room:MapRoom, depth = 0):
 	if (depth >= MAX_MAP_DEPTH):
 		return
 		
-	for chunk_pos in room_chunk_positions[room.type]:
+	var data = GetRoomStaticData(room.GetType())
+	for chunk_pos in data.GetChunkPositions():
 		xy_rooms[room.pos + chunk_pos] = room
 	
-	for chunk_pos in room_chunk_positions[room.type]: # for every chunk
+	for chunk_pos in data.GetChunkPositions(): # for every chunk
 		if not room.HasChunk(chunk_pos): # if it doesnt exist
 			var chunk = RoomChunk.new(room, chunk_pos) # create one
-			for dir in room_chunk_exit_dirs[room.type][chunk_pos]: # for every chunk's exit direction
+			for dir in data.GetPossibleChunkExitDirs()[chunk_pos]: # for every chunk's exit direction
 				# generate a new neighbour room
 				var opp_dir = OppositeDir(dir)
-				var new_type = ALUtil.RandomArrayElement(room_types[opp_dir])
+				var new_type = ALUtil.RandomArrayElement(room_possible_dir_types[opp_dir])
+				var new_data = GetRoomStaticData(new_type)
 				
 				var x = room.pos.x + chunk_pos.x + DirVector(dir).x
 				var y = room.pos.y + chunk_pos.y + DirVector(dir).y
@@ -193,13 +196,13 @@ func expand_room (room:MapRoom, depth = 0):
 				# brute-force first available neighbour's chunk position matching {dir} for {new_type}
 				var valid = false
 				var new_chunk_pos
-				for idx in room_chunk_positions[new_type].size():
-					new_chunk_pos = room_chunk_positions[new_type][idx]
-					if opp_dir in room_chunk_exit_dirs[new_type][new_chunk_pos]:
+				for idx in new_data.GetChunkPositions().size():
+					new_chunk_pos = new_data.GetChunkPositions()[idx]
+					if opp_dir in new_data.GetPossibleChunkExitDirs()[new_chunk_pos]:
 						var new_x = x - new_chunk_pos.x
 						var new_y = y - new_chunk_pos.y
 						valid = true
-						for _chunk_pos in room_chunk_positions[new_type]:
+						for _chunk_pos in new_data.GetChunkPositions():
 							if xy_rooms.has(Vector2(new_x, new_y) + _chunk_pos):
 								valid = false
 								break
@@ -224,9 +227,9 @@ func get_room_scene_path (room_type : String):
 func set_room_as_current_scene (room:MapRoom, entered_from_dir = null):
 	var new_plr_chunk
 	if entered_from_dir != null:
-		var plr_chunk_pos = current_room_scene.WorldToChunkPosition(player.global_position)
+		var plr_chunk_pos = current_room_scene.Get2DWorldToChunkPosition(ALMain.Get3Dto2DVector(player.Get3DPosition()))
 		var closest_plr_chunk_pos
-		for chunk_pos in room_chunk_positions[current_room.type]:
+		for chunk_pos in GetRoomStaticData(current_room.GetType()).GetChunkPositions():
 			if closest_plr_chunk_pos == null or plr_chunk_pos.distance_to(chunk_pos) < plr_chunk_pos.distance_to(closest_plr_chunk_pos):
 				closest_plr_chunk_pos = chunk_pos
 		var plr_chunk = current_room.GetChunk(closest_plr_chunk_pos)
@@ -246,17 +249,27 @@ func set_room_as_current_scene (room:MapRoom, entered_from_dir = null):
 	)
 	
 	player = preload("res://Scenes/Player.tscn").instance()
-	if entered_from_dir != null and new_plr_chunk != null:
-		player.global_position = current_room_scene.GetChunkExitPosition(new_plr_chunk.GetPosition(), entered_from_dir)
-	else:
-		player.global_position = Vector2(500, 300)
+#	if entered_from_dir != null and new_plr_chunk != null:
+#		player.Set2DPosition(GetRoomStaticData(current_room.GetType()).GetChunkExitPosition(new_plr_chunk.GetPosition(), entered_from_dir))
+#	else:
+	if true:
+		player.Set3DPosition(Vector3.ZERO)
 	current_room_scene.add_child(player)
 	player.call_deferred("connect", "damaged", self, "on_player_damaged")
+		
+	var camera = Camera.new()
+	camera.current = true
+	camera.set_script(preload("res://Scripts/Camera.gd"))
+	current_room_scene.add_child(camera)
 
 func on_player_damaged ():
 	ALHUD.GetHPDisplay().Update(player.GetHealth())
 
 func _ready ():
+	for i in range(1, 32):
+		var layer_name = ProjectSettings.get_setting("layer_names/3d_physics/layer_" + str(i))
+		physics_layers.append(layer_name)
+
 	# auto-generate a list of room types
 	# based on filenames of all the room scenes
 	var room_scene_names = []
@@ -277,15 +290,8 @@ func _ready ():
 		var room = load(get_room_scene_path(room_type)).instance()
 		get_tree().get_root().call_deferred("add_child", room)
 		yield(room, "ready")
-		room_sizes.append(room.GetTileSize().x)
-		room_sizes.append(room.GetTileSize().y)
-		room_tile_sizes[room_type] = room.GetTileSize()
-		room_wall_tile_offsets[room_type] = room.GetWallTileOffsets()
-		room_interior_tile_offsets[room_type] = room.GetInteriorTileOffsets()
-		for dir in room.GetPossibleExitDirs():
-			if not room_types.has(dir):
-				room_types[dir] = []
-			room_types[dir].append(room_type)
+		room_sizes.append(room.GetSizeInTiles().x)
+		room_sizes.append(room.GetSizeInTiles().y)
 		rooms.append(room)
 	# based on the size of each room
 	# calculate the maximum size (in tiles) for one square chunk
@@ -294,9 +300,14 @@ func _ready ():
 	for idx in rooms.size():
 		var room = rooms[idx]
 		var room_type = room_scene_names[idx]
-		room_chunk_positions[room_type] = room.GetChunkPositions()
-		room_chunk_exit_dirs[room_type] = room.GetPossibleChunkExitDirs()
-		room_chunk_exit_tile_offsets[room_type] = room.GetChunkExitTileOffsets()
+		var static_data = room.GetStaticData()
+		room_static_data[room_type] = static_data
+		
+		for dir in static_data.GetPossibleExitDirs():
+			if not dir in room_possible_dir_types:
+				room_possible_dir_types[dir] = []
+			room_possible_dir_types[dir].append(room_type)
+		
 		room.queue_free()
 	
 	randomize()
@@ -318,6 +329,23 @@ func _process (_delta):
 # PUBLIC
 #
 #
+
+func GetMousePosition ():
+	return get_viewport().get_mouse_position()
+
+func GetPhysicsLayerIdx (layer_name:String) -> int:
+	return physics_layers.find(layer_name)
+
+func Get3DtoScreenPosition (pos3d: Vector3) -> Vector2:
+	if pos3d == Vector3.ZERO:
+		return Vector2.ZERO
+	return get_viewport().get_camera().unproject_position(pos3d)
+
+func Get2Dto3DVector (pos2d: Vector2) -> Vector3:
+	return Vector3(pos2d.x, 0, pos2d.y)
+
+func Get3Dto2DVector (pos3d: Vector3) -> Vector2:
+	return Vector2(pos3d.x, pos3d.z)
 
 func GetDebugFont (size):
 	var font = DynamicFont.new()
@@ -356,7 +384,6 @@ func GetSettingName (setting_type):
 	return {
 		SettingType.SHOW_ROOM_CHUNKS         : "show room chunks",
 		SettingType.SHOW_ROOM_PATHFINDING    : "show room pathfinding",
-		SettingType.SHOW_INTERIOR_ROOM_TILES : "show interior room tiles",
 		SettingType.SHOW_COLLISION_SHAPES    : "show collision shapes",
 		SettingType.SHOW_ENEMY_STEERING_RAYS : "show enemy steering rays",
 		SettingType.SHOW_ENEMY_FLEE_AREA     : "show enemy flee area",
@@ -370,7 +397,6 @@ func GetSettingValues (setting_type):
 	return {
 		SettingType.SHOW_ROOM_CHUNKS         : ["no", "yes"],
 		SettingType.SHOW_ROOM_PATHFINDING    : ["no", "yes"],
-		SettingType.SHOW_INTERIOR_ROOM_TILES : ["no", "yes"],
 		SettingType.SHOW_COLLISION_SHAPES    : ["no", "yes"],
 		SettingType.SHOW_ENEMY_STEERING_RAYS : ["no", "yes"],
 		SettingType.SHOW_ENEMY_FLEE_AREA     : ["no", "yes"],
@@ -391,28 +417,15 @@ func Unpause ():
 	get_tree().paused = false
 	is_paused = false
 
-func GetCurrentRoomScene         ()                         : return current_room_scene
-func GetRoomTilesPerChunk        ()                         : return room_tiles_per_chunk
-func GetRoomChunkPositions       (room_type)                : return room_chunk_positions[room_type]
-func GetRoomChunkExitDirections  (room_type, chunk_pos)     : return room_chunk_exit_dirs[room_type][chunk_pos]
-func GetRoomWallTileOffsets      (room_type)                : return room_wall_tile_offsets[room_type]
-func GetRoomTileSize             (room_type)                : return room_tile_sizes[room_type]
-func GetRoomChunkExitTileOffsets (room_type, chunk_pos, dir): return room_chunk_exit_tile_offsets[room_type][chunk_pos][dir]
-func GetRoomInteriorTileOffsets  (room_type)                : return room_interior_tile_offsets[room_type]
+func GetCurrentRoomScene  ()         : return current_room_scene
+func GetRoomTilesPerChunk ()         : return room_tiles_per_chunk
+func GetRoomStaticData    (room_type): return room_static_data[room_type]
 	
-func IsBodyPlayer (body:KinematicBody2D):
+func IsBodyPlayer (body:KinematicBody):
 	return body == player
 
 func GetPlayer ():
 	return player
-
-func GetAllDirs ():
-	return [
-		Dir.LEFT,
-		Dir.RIGHT,
-		Dir.UP,
-		Dir.DOWN
-	]
 
 func OppositeDir (dir):
 	match dir:
@@ -444,7 +457,5 @@ func EnemyNameToType (enemy_name):
 		"Crackhead": return EnemyType.CRACKHEAD
 		"Skin"     : return EnemyType.SKIN
 
-func MoveLeft   (room_chunk : RoomChunk): set_room_as_current_scene(room_chunk.GetNeighbour(Dir.LEFT ).GetRoom(), Dir.RIGHT)
-func MoveRight  (room_chunk : RoomChunk): set_room_as_current_scene(room_chunk.GetNeighbour(Dir.RIGHT).GetRoom(), Dir.LEFT)
-func MoveTop    (room_chunk : RoomChunk): set_room_as_current_scene(room_chunk.GetNeighbour(Dir.UP   ).GetRoom(), Dir.DOWN)
-func MoveBottom (room_chunk : RoomChunk): set_room_as_current_scene(room_chunk.GetNeighbour(Dir.DOWN ).GetRoom(), Dir.UP)
+func Move (room_chunk : RoomChunk, dir):
+	set_room_as_current_scene(room_chunk.GetNeighbour(dir).GetRoom(), OppositeDir(dir))

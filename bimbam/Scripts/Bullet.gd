@@ -1,6 +1,6 @@
-extends Node2D
+extends Spatial
 
-var velocity = null
+var direction = null # normalized direction vector
 var damage = null # in hearts
 
 func on_body_entered (body):
@@ -12,8 +12,8 @@ func _ready ():
 	get_tree().create_timer(ALMain.BULLET_LIFETIME).connect("timeout", self, "queue_free")
 
 func _process (delta):
-	position += velocity * ALMain.BULLET_SPEED * delta
+	transform.origin += direction * ALMain.BULLET_SPEED * delta
 
-func Init (_velocity:Vector2, _damage:float):
-	velocity = _velocity
+func Init (_direction:Vector3, _damage:float):
+	direction = _direction
 	damage = _damage

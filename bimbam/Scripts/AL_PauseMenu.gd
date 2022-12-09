@@ -1,3 +1,7 @@
+#
+# TODO: Make setting arrows interact with the mouse
+#
+
 extends CanvasLayer
 
 var focused_node = null

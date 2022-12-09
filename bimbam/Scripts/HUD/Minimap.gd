@@ -16,10 +16,11 @@ func get_rooms_tile_positions (room, pos):
 	if room_tile_positions.has(room):
 		return
 	room_tile_positions[room] = pos
-	for chunk_pos in ALMain.GetRoomChunkPositions(room.type):
+	var data = ALMain.GetRoomStaticData(room.GetType())
+	for chunk_pos in data.GetChunkPositions():
 		if room.HasChunk(chunk_pos):
 			var chunk = room.GetChunk(chunk_pos)
-			for dir in ALMain.GetRoomChunkExitDirections(room.type, chunk_pos):
+			for dir in data.GetPossibleChunkExitDirs()[chunk_pos]:
 				if chunk.HasNeighbour(dir):
 					var neighbour_chunk = chunk.GetNeighbour(dir)
 					var new_chunk_pos = chunk_pos + ALMain.DirVector(dir) - neighbour_chunk.pos
@@ -31,13 +32,15 @@ func update_room (room):
 	var black_tile_idx = $ViewportContainer/Viewport/TileMap.tile_set.find_tile_by_name("black")
 	var white_tile_idx = $ViewportContainer/Viewport/TileMap.tile_set.find_tile_by_name("white")
 	
-	for wall_tile_offset in ALMain.GetRoomWallTileOffsets(room.type):
+	var data = ALMain.GetRoomStaticData(room.GetType())
+	
+	for wall_tile_offset in data.GetWallTilePositions():
 		var tile_idx = white_tile_idx
 		var is_exit = false
 		for chunk in room.GetChunks():
-			for dir in ALMain.GetAllDirs():
+			for dir in ALMain.Dir.values():
 				if chunk.HasNeighbour(dir):
-					if wall_tile_offset in ALMain.GetRoomChunkExitTileOffsets(room.type, chunk.GetPosition(), dir):
+					if wall_tile_offset in data.GetChunkExitTilePositions()[chunk.GetPosition()][dir]:
 						is_exit = true
 						break
 			if is_exit:
@@ -48,7 +51,7 @@ func update_room (room):
 			tile_idx = red_tile_idx
 		var pos = room_tile_positions[room] + wall_tile_offset
 		$ViewportContainer/Viewport/TileMap.set_cell(pos.x, pos.y, tile_idx)
-	for interior_tile_offset in ALMain.GetRoomInteriorTileOffsets(room.type):
+	for interior_tile_offset in data.GetInteriorTilePositions():
 		var pos = room_tile_positions[room] + interior_tile_offset
 		$ViewportContainer/Viewport/TileMap.set_cell(pos.x, pos.y, black_tile_idx)
 
@@ -65,5 +68,6 @@ func UpdateCurrentRoom (new_room : ALMain.MapRoom):
 	current_room = new_room
 	update_room(new_room)
 	
-	var current_room_center_tilepos = room_tile_positions[current_room] + ALMain.GetRoomTileSize(current_room.type) / 2
+	var current_data = ALMain.GetRoomStaticData(current_room.GetType())
+	var current_room_center_tilepos = room_tile_positions[current_room] + current_data.GetSizeInTiles() / 2
 	$ViewportContainer/Viewport/Camera2D.position = $ViewportContainer/Viewport/TileMap.map_to_world(current_room_center_tilepos)
