@@ -26,7 +26,7 @@ func _ready ():
 	$iframes.wait_time = ALMain.ENEMY_IFRAMES
 	$iframes.connect("timeout", self, "on_iframes_timeout")
 	
-	pathfinding_agent_id = ALMain.GetCurrentRoomScene().RegisterPathfindingAgent(global_transform.origin)
+	pathfinding_agent_id = ALMain.GetCurrentRoomScene().RegisterPathfindingAgent()
 
 func _exit_tree ():
 	ALMain.GetCurrentRoomScene().RemovePathfindingAgent(pathfinding_agent_id)
@@ -51,6 +51,7 @@ func _process (delta):
 						can_attack = false
 						$AttackTimer.start()
 						ALMain.GetCurrentRoomScene().SpawnBullet(pos, plr_dir, enemy_data.GetBulletDamage())
+						$ShootSound.play()
 				else:
 					move = true
 	
@@ -58,7 +59,8 @@ func _process (delta):
 		move = true
 	
 	if move:	
-		ALMain.GetCurrentRoomScene().UpdatePathfindingAgent(pathfinding_agent_id, pos)
+		var room = ALMain.GetCurrentRoomScene()
+		room.UpdatePathfindingAgent(pathfinding_agent_id, room.Get3DWorldTo2DTilePosition(pos).floor(), Vector2.ONE)
 		var next_dir = plr_dir
 		if hit_from_dir != null:
 			next_dir = hit_from_dir * 50

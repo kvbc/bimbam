@@ -95,10 +95,7 @@ void FlowFieldPathfinding::Update (const Vector2& target_pos) {
     }
 }
 
-int FlowFieldPathfinding::RegisterAgent (int x, int y) {
-    Agent & agent = m_agents[m_agents_top];
-    agent.x = x;
-    agent.y = y;
+int FlowFieldPathfinding::RegisterAgent () {
     return m_agents_top++;
 }
 
@@ -106,45 +103,38 @@ void FlowFieldPathfinding::RemoveAgent (int id) {
     Agent * agent = get_agent(id);
     if (agent == NULL)
         return;
-    Tile * tile = get_tile(agent->x, agent->y);
-    if (tile != NULL)
-    if (tile->occupied_by == id)
-        tile->occupied_by = FFP_NO_AGENT;
+    set_agent_tiles(*agent, id, FFP_NO_AGENT);
 }
 
-void FlowFieldPathfinding::UpdateAgent (int id, int x, int y) {
+void FlowFieldPathfinding::UpdateAgent (int id, int x, int y, int width, int height) {
     Agent * agent = get_agent(id);
     if (agent == NULL)
         return;
         
-    Tile * new_tile = get_tile(x, y);
-    if (new_tile == NULL)
-        return;
-    if (new_tile->occupied_by != FFP_NO_AGENT)
-        return;
-
-    RemoveAgent(id); // placeholder
+    RemoveAgent(id);
 
     agent->x = x;
     agent->y = y;
-    new_tile->occupied_by = id;
+    agent->width = width;
+    agent->height = height;
+    set_agent_tiles(*agent, FFP_NO_AGENT, id);
 }
 
-Vector2 FlowFieldPathfinding::GetNextAgentPosition (int id) const {
+Variant FlowFieldPathfinding::GetNextAgentPosition (int id) const {
     const Agent * agent = get_agent(id);
     if (agent == NULL)
-        return Vector2(-1,-1);
+        return Variant();
+    if (!agent->has_been_updated())
+        return Variant();
     const Tile * tile = get_tile(agent->x, agent->y);
-    if (tile == NULL)
-        return Vector2(-1,-1);
-    if (tile->wall)
-        return Vector2(-1, -1);
-    if (tile->occupied_by != id)
-        return Vector2(-1, -1);
-    return Vector2(
-        agent->x + tile->dirx,
-        agent->y + tile->diry
-    );
+    if (tile != NULL)
+    if (!tile->wall)
+    if (tile->occupied_by == id)
+        return Vector2(
+            agent->x + tile->dirx,
+            agent->y + tile->diry
+        );
+    return Variant();
 }
 
 bool FlowFieldPathfinding::IsTileWall (const Vector2 &pos) const {
@@ -179,6 +169,8 @@ bool FlowFieldPathfinding::IsTileOccupied (const Vector2 &pos) const {
  */
 
 void FlowFieldPathfinding::_bind_methods () {
+    BIND_CONSTANT(FFP_NO_AGENT);
+
     BIND_ENUM_CONSTANT(NONE);
     BIND_ENUM_CONSTANT(LEFT);
     BIND_ENUM_CONSTANT(RIGHT);
@@ -199,8 +191,8 @@ void FlowFieldPathfinding::_bind_methods () {
 	ClassDB::bind_method(D_METHOD("IsTileWall", "tile_pos"), &FlowFieldPathfinding::IsTileWall);
 	ClassDB::bind_method(D_METHOD("IsTileOccupied", "tile_pos"), &FlowFieldPathfinding::IsTileOccupied);
 	ClassDB::bind_method(D_METHOD("GetTargetPosition"), &FlowFieldPathfinding::GetTargetPosition);
-	ClassDB::bind_method(D_METHOD("RegisterAgent", "x", "y"), &FlowFieldPathfinding::RegisterAgent);
-	ClassDB::bind_method(D_METHOD("UpdateAgent", "id", "x", "y"), &FlowFieldPathfinding::UpdateAgent);
+	ClassDB::bind_method(D_METHOD("RegisterAgent"), &FlowFieldPathfinding::RegisterAgent);
+	ClassDB::bind_method(D_METHOD("UpdateAgent", "id", "x", "y", "width", "height"), &FlowFieldPathfinding::UpdateAgent);
 	ClassDB::bind_method(D_METHOD("RemoveAgent", "id"), &FlowFieldPathfinding::RemoveAgent);
 }
 
@@ -210,24 +202,44 @@ void FlowFieldPathfinding::_bind_methods () {
  * 
  */
 
+void FlowFieldPathfinding::set_agent_tiles (const Agent & agent, int occupied_by, int to_id) {
+    if (!agent.has_been_updated())
+        return;
+    for (int ix = 0; ix < agent.width; ix++)
+    for (int iy = 0; iy < agent.height; iy++) {
+        Tile * tile = get_tile(
+            agent.x + ix,
+            agent.y + iy
+        );
+        if (tile != NULL)
+        if (tile->occupied_by == occupied_by)
+            tile->occupied_by = to_id;
+    }
+}
+
 bool FlowFieldPathfinding::is_valid_idx (int idx) const {
     return (idx >= 0) && (idx < m_width * m_height);
 }
+
 Vector2 FlowFieldPathfinding::idx_to_vec2 (int idx) const {
     return Vector2(idx % m_width, idx / m_width);
 }
+
 int FlowFieldPathfinding::xy_to_idx (int x, int y) const {
     return x + y * m_width;
 }
+
 int FlowFieldPathfinding::vec2_to_idx (const Vector2 &v) const {
     return xy_to_idx(v[0], v[1]);
 }
+
 const FlowFieldPathfinding::Tile * FlowFieldPathfinding::get_tile (int x, int y) const {
     int idx = xy_to_idx(x, y);
     if (!is_valid_idx(idx))
         return NULL;
     return &m_tiles[idx];
 }
+
 FlowFieldPathfinding::Dir FlowFieldPathfinding::xy_to_dir (int x, int y) const {
     if (x == -1 && y ==  0) return Dir::LEFT;
     if (x ==  1 && y ==  0) return Dir::RIGHT;
@@ -239,6 +251,7 @@ FlowFieldPathfinding::Dir FlowFieldPathfinding::xy_to_dir (int x, int y) const {
     if (x == -1 && y == -1) return Dir::TOPLEFT;
     return Dir::NONE;
 }
+
 const FlowFieldPathfinding::Agent * FlowFieldPathfinding::get_agent (int id) const {
     if (id < 0)
     if (id >= FFP_MAX_AGENTS)

@@ -48,7 +48,7 @@ func start_update_loop ():
 func _ready ():
 	start_update_loop()
 
-func _process (delta):
+func _process (_delta):
 	update()
 
 func _draw ():

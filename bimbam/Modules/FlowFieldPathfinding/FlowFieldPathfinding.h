@@ -4,6 +4,7 @@
 #include "core/reference.h"
 #include "core/array.h"
 
+#define FFP_MAX_AGENT_SIZE (20 * 20)
 #define FFP_MAX_AGENTS (1000)
 #define FFP_NO_AGENT (-1)
 
@@ -22,10 +23,31 @@ public:
         BOTLEFT,
         BOTRIGHT
     };
+    
+private:
+    struct TileVector2 {
+        int x;
+        int y;
+
+        TileVector2 (int x_, int y_) {
+            x = x_;
+            y = y_;
+        }
+    };
 
     struct Agent {
         int x;
         int y;
+        int width;
+        int height;
+
+        Agent () {
+            x = -1;
+        }
+
+        inline bool has_been_updated () const {
+            return x >= 0;
+        }
     };
 
     struct Tile {
@@ -48,6 +70,7 @@ public:
         }
     };
 
+public:
     FlowFieldPathfinding () {
         m_width = -1;
         m_height = -1;
@@ -65,14 +88,14 @@ public:
 	void Init (const Array& tile_positions);
     void Update (const Vector2& target_pos);
 
-    int RegisterAgent (int x, int y);
-    void UpdateAgent (int id, int x, int y);
+    int RegisterAgent ();
+    void UpdateAgent (int id, int x, int y, int width, int height);
     void RemoveAgent (int id);
 
     int GetWidth  () const { return m_width; }
     int GetHeight () const { return m_height; }
     const Vector2& GetTargetPosition () const { return m_target_pos; }
-    Vector2 GetNextAgentPosition (int id) const;
+    Variant GetNextAgentPosition (int id) const; // NULL or Vector2
 
     bool IsTileWall      (const Vector2 & pos) const;
     int GetTileDistance  (const Vector2 & pos) const;
@@ -83,15 +106,17 @@ protected:
 	static void _bind_methods ();
 
 private:
-    inline bool          is_valid_idx   (int idx)          const;
-    inline Vector2       idx_to_vec2    (int idx)          const;
-    inline int           xy_to_idx      (int x, int y)     const;
-    inline int           vec2_to_idx    (const Vector2 &v) const;
-    inline Dir           xy_to_dir      (int x, int y)     const;
-    inline const Tile *  get_tile       (int x, int y)     const;
-    inline const Agent * get_agent      (int id)           const;
-    inline Tile *        get_tile       (int x, int y) { return const_cast<Tile*>(const_cast<const FlowFieldPathfinding*>(this)->get_tile(x, y)); }
-    inline Agent *       get_agent      (int id)       { return const_cast<Agent*>(const_cast<const FlowFieldPathfinding*>(this)->get_agent(id)); }
+           void          set_agent_tiles (const Agent & agent, int occupied_by, int to_id);
+    inline bool          is_valid_idx    (int idx)          const;
+    inline Vector2       idx_to_vec2     (int idx)          const;
+    inline int           xy_to_idx       (int x, int y)     const;
+    inline int           vec2_to_idx     (const Vector2 &v) const;
+    inline Dir           xy_to_dir       (int x, int y)     const;
+    inline const Tile *  get_tile        (int x, int y)     const;
+    inline const Agent * get_agent       (int id)           const;
+    inline Tile *        get_tile        (int x, int y) { return const_cast<Tile*>(const_cast<const FlowFieldPathfinding*>(this)->get_tile(x, y)); }
+    inline Agent *       get_agent       (int id)       { return const_cast<Agent*>(const_cast<const FlowFieldPathfinding*>(this)->get_agent(id)); }
+
 
     Vector2 m_target_pos;
     int m_width;

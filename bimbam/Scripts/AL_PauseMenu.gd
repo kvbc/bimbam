@@ -44,7 +44,7 @@ func get_prev_setting_value (setting_type):
 		idx = setting_values.size() - 1
 	return setting_values[idx]
 
-func _process (delta):
+func _process (_delta):
 	var pause_pressed = Input.is_action_just_pressed("PAUSE")
 	if ALMain.IsPaused():
 		if Input.is_action_just_pressed("ui_accept"):

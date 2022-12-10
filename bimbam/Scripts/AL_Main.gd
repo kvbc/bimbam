@@ -30,6 +30,7 @@ const MINIMAP_ZOOM_SENSITIVITY = 1
 enum SettingType {
 	SHOW_ROOM_CHUNKS,
 	SHOW_ROOM_PATHFINDING,
+	SHOW_ROOM_PROP_BOUNDS,
 	SHOW_COLLISION_SHAPES,
 	SHOW_ENEMY_STEERING_RAYS,
 	SHOW_ENEMY_FLEE_AREA,
@@ -225,7 +226,7 @@ func get_room_scene_path (room_type : String):
 	return "res://Scenes/Rooms/" + room_type + ".tscn"
 
 func set_room_as_current_scene (room:MapRoom, entered_from_dir = null):
-	var new_plr_chunk
+	var new_plr_chunk = null
 	if entered_from_dir != null:
 		var plr_chunk_pos = current_room_scene.Get2DWorldToChunkPosition(ALMain.Get3Dto2DVector(player.Get3DPosition()))
 		var closest_plr_chunk_pos
@@ -338,7 +339,10 @@ func GetPhysicsLayerIdx (layer_name:String) -> int:
 
 func Get3DtoScreenPosition (pos3d: Vector3) -> Vector2:
 	if pos3d == Vector3.ZERO:
-		return Vector2.ZERO
+		# there's a division by 0 somewhere in godot's source code of Camera's unproject_position() function
+		# which is causing an error with pos3d being exactly Vector3.ZERO
+		# this will work for now
+		pos3d = 1e-10 * Vector3.ONE
 	return get_viewport().get_camera().unproject_position(pos3d)
 
 func Get2Dto3DVector (pos2d: Vector2) -> Vector3:
@@ -384,6 +388,7 @@ func GetSettingName (setting_type):
 	return {
 		SettingType.SHOW_ROOM_CHUNKS         : "show room chunks",
 		SettingType.SHOW_ROOM_PATHFINDING    : "show room pathfinding",
+		SettingType.SHOW_ROOM_PROP_BOUNDS    : "show room prop bounds",
 		SettingType.SHOW_COLLISION_SHAPES    : "show collision shapes",
 		SettingType.SHOW_ENEMY_STEERING_RAYS : "show enemy steering rays",
 		SettingType.SHOW_ENEMY_FLEE_AREA     : "show enemy flee area",
@@ -397,6 +402,7 @@ func GetSettingValues (setting_type):
 	return {
 		SettingType.SHOW_ROOM_CHUNKS         : ["no", "yes"],
 		SettingType.SHOW_ROOM_PATHFINDING    : ["no", "yes"],
+		SettingType.SHOW_ROOM_PROP_BOUNDS    : ["no", "yes"],
 		SettingType.SHOW_COLLISION_SHAPES    : ["no", "yes"],
 		SettingType.SHOW_ENEMY_STEERING_RAYS : ["no", "yes"],
 		SettingType.SHOW_ENEMY_FLEE_AREA     : ["no", "yes"],

@@ -44,9 +44,10 @@ var pathfinding : FlowFieldPathfinding = null
 #
 # DEBUG
 #
-func _process (delta):
+func _process (_delta):
 	if room == null: # uninitialized
 		return
+		
 	var data = ALMain.GetRoomStaticData(room.GetType())
 	if ALMain.GetSetting(ALMain.SettingType.SHOW_ROOM_CHUNKS) == "yes":
 		var tiles_per_chunk = ALMain.GetRoomTilesPerChunk() * Vector2.ONE
@@ -148,7 +149,7 @@ func get_tile_polygon (tile_pos : Vector2) -> PoolVector2Array:
 		Vector2.ZERO + ALMain.Get3Dto2DVector(Get2DTileTo3DWorldPosition(tile_pos + Vector2(1,1))),
 		Vector2.ZERO + ALMain.Get3Dto2DVector(Get2DTileTo3DWorldPosition(tile_pos + Vector2(0,1)))
 	])
-
+	
 #
 #
 # PUBLIC
@@ -186,8 +187,10 @@ func Init (
 							enemy.Init(ALMain.EnemyNameToType(enemy_group.name))
 							enemies.add_child(enemy)
 	
+	for prop in $Props.get_children():
+		prop.Init()
+	
 	for tile_pos in data.GetInteriorTilePositions():
-		var pos = Get2DTileTo3DWorldPosition(tile_pos)
 		var body = StaticBody.new()
 		body.collision_layer = 0
 		body.collision_mask = 0
@@ -253,16 +256,16 @@ func Get2DWorldToTilePosition  (world_pos:Vector2): return $Viewport/TileMap.wor
 func Get2DWorldToChunkPosition (world_pos:Vector2): return Get2DTileToChunkPosition(Get2DWorldToTilePosition(world_pos))
 
 # basic 2D<>3DWorld transformation
-func Get2DTileTo3DWorldPosition (tile_pos):
-	tile_pos *= $Viewport.size / $Viewport/TileMap.get_used_rect().size
-	tile_pos -= $Viewport.size / 2
-	return ALMain.Get2Dto3DVector(tile_pos * $Floor.pixel_size)
-func Get3DWorldTo2DTilePosition (floor_pos):
-	floor_pos = ALMain.Get3Dto2DVector(floor_pos)
-	floor_pos /= $Floor.pixel_size
-	floor_pos += $Viewport.size / 2
-	floor_pos /= $Viewport.size / $Viewport/TileMap.get_used_rect().size
-	return floor_pos
+func Get2DTileTo3DWorldPosition (tile_pos2d):
+	tile_pos2d *= $Viewport.size / $Viewport/TileMap.get_used_rect().size
+	tile_pos2d -= $Viewport.size / 2
+	return ALMain.Get2Dto3DVector(tile_pos2d * $Floor.pixel_size)
+func Get3DWorldTo2DTilePosition (world_pos3d):
+	world_pos3d = ALMain.Get3Dto2DVector(world_pos3d)
+	world_pos3d /= $Floor.pixel_size
+	world_pos3d += $Viewport.size / 2
+	world_pos3d /= $Viewport.size / $Viewport/TileMap.get_used_rect().size
+	return world_pos3d
 
 #
 #
@@ -270,17 +273,15 @@ func Get3DWorldTo2DTilePosition (floor_pos):
 #
 #
 
-func RegisterPathfindingAgent (pos3d : Vector3):
-	var tile_pos = Get3DWorldTo2DTilePosition(pos3d)
-	return pathfinding.RegisterAgent(tile_pos.x, tile_pos.y)
-	
-func UpdatePathfindingAgent (id, pos3d : Vector3):
-	var tile_pos = Get3DWorldTo2DTilePosition(pos3d)
-	pathfinding.UpdateAgent(id, tile_pos.x, tile_pos.y)
+func RegisterPathfindingAgent ():
+	return pathfinding.RegisterAgent()
+
+func UpdatePathfindingAgent (id, tile_pos2d : Vector2, tile_size2d : Vector2):
+	pathfinding.UpdateAgent(id, int(tile_pos2d.x), int(tile_pos2d.y), int(tile_size2d.x), int(tile_size2d.y))
 	
 func GetNextPathfindingAgentPosition (id):
 	var tile_pos = pathfinding.GetNextAgentPosition(id)
-	if tile_pos == Vector2(-1, -1):
+	if tile_pos == null:
 		return null
 	return Get2DTileTo3DWorldPosition(tile_pos + 0.5 * Vector2.ONE)
 	
@@ -366,7 +367,6 @@ func GetStaticData ():
 		
 	for tilemap in $Viewport/Exit_Tilemaps.get_children():
 		var dir = get_exit_tilemap_dir(tilemap)
-		var move_method = get_exit_tilemap_dir(tilemap)
 		for tile_pos in tilemap.get_used_cells():
 			var chunk_pos = Get2DTileToChunkPosition(tile_pos)
 			if not tile_pos in chunk_dir_exit_tile_positions[chunk_pos][dir]:
