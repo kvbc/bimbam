@@ -41,11 +41,11 @@ def remove_dir (dir):
 def read_yes_or_no ():
     while True:
         inp = input().strip().lower()
-        if inp=="y" or inp=="":
+        if inp=="y":
             return True
-        elif inp=="n":
+        elif inp=="n" or inp=="":
             return False
-        print("[y/n] > ", end="")
+        print("[y/N] > ", end="")
 
 def print_section (*args):
     border = "------------------------------------"
@@ -105,10 +105,12 @@ f"""{BORDER_FORE}-----------------------------------------------
     build_editor = False
 
     if os.path.exists(GODOT_BIN):
-        print(Fore.YELLOW + "Build docs? [y/n]: ", end="")
+        print(Fore.YELLOW + "Build docs? [y/N]: ", end="")
         if read_yes_or_no():
             print_section(Fore.YELLOW + "Building docs...")
             subprocess.call([GODOT_BIN, "--doctool", "./godot"])
+            build_editor = True
+            print(Fore.GREEN + "Docs have been built, editor compilation is required")
         for module_name in os.listdir(modules_path):
              module_path = os.path.join(modules_path, module_name)
              if os.path.isdir(module_path):
@@ -118,18 +120,16 @@ f"""{BORDER_FORE}-----------------------------------------------
                      os.path.join(module_path, "doc_classes"),
                      dirs_exist_ok=True
                  )
-        build_editor = True
-        print(Fore.GREEN + "Docs have been built, editor compilation is required")
     else:
         print(Fore.RED + f'Cannot build docs, godot binary not found : "{GODOT_BIN}"')
 
-    print(Fore.YELLOW + "Build export templates? [y/n]: ", end="")
+    print(Fore.YELLOW + "Build export templates? [y/N]: ", end="")
     if read_yes_or_no():
         print_section(Fore.YELLOW + "Building export templates...")
         os.system("scons --directory=godot platform=windows tools=no target=release -j10") # Build the export template
 
     if not build_editor:
-        print(Fore.YELLOW + "Build the editor? [y/n]: ", end="")
+        print(Fore.YELLOW + "Build the editor? [y/N]: ", end="")
         build_editor = read_yes_or_no()
     if build_editor:
         print_section(Fore.YELLOW + "Building the editor...")
