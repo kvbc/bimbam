@@ -5,6 +5,9 @@ var pathfinding_agent_id = null
 func _process (_delta):
 	var aabb = $MeshInstance.get_transformed_aabb()
 	
+	#
+	# DEBUG
+	#
 	if ALMain.GetSetting(ALMain.SettingType.SHOW_ROOM_PROP_BOUNDS) == "yes":
 		ALDebug.DrawLine3D(ALDebug.Line3D.new(
 			aabb.position,

@@ -7,6 +7,11 @@ var is_attacking = false
 var is_attack_retracting = false
 var target_hand_deg = 0
 onready var health = ALMain.PLAYER_MAX_HP # in hearts
+var attack_angle = ATTACK_ANGLE
+var moving_left = false
+var moving_right = false
+var moving_up = false
+var moving_down = false
 
 func on_iframes_timeout ():
 	$iframes.stop()
@@ -27,10 +32,40 @@ func _ready ():
 	$iframes.connect("timeout", self, "on_iframes_timeout")
 	$HandsLook/HandsAttack/Right/Weapon.connect("body_entered", self, "attempt_to_attack_body")
 	
+func _unhandled_input (event):
+	if event is InputEventMouseButton:
+		if event.button_index == BUTTON_LEFT:
+			if event.pressed:
+				if not is_attacking:
+					is_attacking = true
+					target_hand_deg = attack_angle
+					$AttackSound.play()
+					for body in $HandsLook/HandsAttack/Right/Weapon.get_overlapping_bodies():
+						attempt_to_attack_body(body)
+	elif event is InputEventKey:
+		match event.scancode:
+			KEY_A: moving_left  = event.pressed
+			KEY_D: moving_right = event.pressed
+			KEY_W: moving_up    = event.pressed
+			KEY_S: moving_down  = event.pressed
+	
+func _physics_process (delta):
+	var move = Vector2.ZERO
+	if moving_left:
+		move += Vector2.LEFT
+	if moving_right:
+		move += Vector2.RIGHT
+	if moving_up:
+		move += Vector2.UP
+	if moving_down:
+		move += Vector2.DOWN
+	if move != Vector2.ZERO:
+		move_and_collide(ALMain.Get2Dto3DVector(move) * ALMain.PLAYER_SPEED * delta)
+	
 func _process (delta):
 	var wpn_deg = 0
 	var mouse_pos = ALMain.GetMousePosition()
-	var attack_angle = ATTACK_ANGLE
+	attack_angle = ATTACK_ANGLE
 	var screen_pos = ALMain.Get3DtoScreenPosition(global_transform.origin)
 	if mouse_pos.x < screen_pos.x: # left
 		$HandsLook/HandsAttack/Left.flip_h = true
@@ -40,14 +75,6 @@ func _process (delta):
 		$HandsLook/HandsAttack/Left.flip_h = false
 		$HandsLook/HandsAttack/Right/Sprite.flip_h = false
 		attack_angle *= -1
-
-	if Input.is_action_pressed("ATTACK"):
-		if not is_attacking:
-			is_attacking = true
-			target_hand_deg = attack_angle
-			$AttackSound.play()
-			for body in $HandsLook/HandsAttack/Right/Weapon.get_overlapping_bodies():
-				attempt_to_attack_body(body)
 
 	if is_attacking and not is_attack_retracting:
 		wpn_deg += attack_angle
@@ -82,11 +109,6 @@ func _process (delta):
 		$Flip.scale.x = -1
 	if Input.is_action_just_pressed("RIGHT"):
 		$Flip.scale.x = 1
-		
-	var move = Input.get_vector("LEFT", "RIGHT", "UP", "DOWN")
-	move = Vector3(move.x, 0, move.y)
-	if move != Vector3.ZERO:
-		move_and_collide(move * ALMain.PLAYER_SPEED * delta)
 
 #
 #

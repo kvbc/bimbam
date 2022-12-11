@@ -126,10 +126,10 @@ func _process (_delta):
 
 func get_exit_tilemap_dir (tilemap):
 	return {
-		$Viewport/Exit_Tilemaps/Left  : ALMain.Dir.LEFT,
-		$Viewport/Exit_Tilemaps/Right : ALMain.Dir.RIGHT,
-		$Viewport/Exit_Tilemaps/Up    : ALMain.Dir.UP,
-		$Viewport/Exit_Tilemaps/Down  : ALMain.Dir.DOWN,
+		$Viewport/ExitTilemaps/Left  : ALMain.Dir.LEFT,
+		$Viewport/ExitTilemaps/Right : ALMain.Dir.RIGHT,
+		$Viewport/ExitTilemaps/Up    : ALMain.Dir.UP,
+		$Viewport/ExitTilemaps/Down  : ALMain.Dir.DOWN,
 	}[tilemap]
 
 func start_pathfinding_loop ():
@@ -206,7 +206,7 @@ func Init (
 	
 	var exit_tile_positions = []
 	
-	for tilemap in $Viewport/Exit_Tilemaps.get_children():
+	for tilemap in $Viewport/ExitTilemaps.get_children():
 		var dir = get_exit_tilemap_dir(tilemap)
 		for tile_pos in tilemap.get_used_cells():
 			var chunk_pos = Get2DTileToChunkPosition(tile_pos)
@@ -233,7 +233,7 @@ func Init (
 			$Collision/Walls.add_child(body)
 
 func GetSizeInTiles ():
-	return $Viewport/TileMap.get_used_rect().size
+	return $Viewport/WallTileMap.get_used_rect().size
 
 func SpawnBullet (pos3d:Vector3, velocity:Vector3, damage:float):
 	var bullet = preload("res://Scenes/Bullet.tscn").instance()
@@ -249,22 +249,22 @@ func SpawnBullet (pos3d:Vector3, velocity:Vector3, damage:float):
 
 # All 2D<>2D coordinate system transformations
 func Get2DTileToChunkPosition  (tile_pos :Vector2): return (tile_pos / ALMain.GetRoomTilesPerChunk() * Vector2.ONE).floor()
-func Get2DTileToWorldPosition  (tile_pos :Vector2): return $Viewport/TileMap.map_to_world(tile_pos)
+func Get2DTileToWorldPosition  (tile_pos :Vector2): return $Viewport/WallTileMap.map_to_world(tile_pos)
 func Get2DChunkToTilePosition  (chunk_pos:Vector2): return chunk_pos * ALMain.GetRoomTilesPerChunk()
 func Get2DChunkToWorldPosition (chunk_pos:Vector2): return Get2DTileToWorldPosition(Get2DChunkToTilePosition(chunk_pos))
-func Get2DWorldToTilePosition  (world_pos:Vector2): return $Viewport/TileMap.world_to_map(world_pos)
+func Get2DWorldToTilePosition  (world_pos:Vector2): return $Viewport/WallTileMap.world_to_map(world_pos)
 func Get2DWorldToChunkPosition (world_pos:Vector2): return Get2DTileToChunkPosition(Get2DWorldToTilePosition(world_pos))
 
-# basic 2D<>3DWorld transformation
+# basic 2DTile <> 3DWorld transformation
 func Get2DTileTo3DWorldPosition (tile_pos2d):
-	tile_pos2d *= $Viewport.size / $Viewport/TileMap.get_used_rect().size
+	tile_pos2d *= $Viewport.size / $Viewport/WallTileMap.get_used_rect().size
 	tile_pos2d -= $Viewport.size / 2
 	return ALMain.Get2Dto3DVector(tile_pos2d * $Floor.pixel_size)
 func Get3DWorldTo2DTilePosition (world_pos3d):
 	world_pos3d = ALMain.Get3Dto2DVector(world_pos3d)
 	world_pos3d /= $Floor.pixel_size
 	world_pos3d += $Viewport.size / 2
-	world_pos3d /= $Viewport.size / $Viewport/TileMap.get_used_rect().size
+	world_pos3d /= $Viewport.size / $Viewport/WallTileMap.get_used_rect().size
 	return world_pos3d
 
 #
@@ -276,8 +276,13 @@ func Get3DWorldTo2DTilePosition (world_pos3d):
 func RegisterPathfindingAgent ():
 	return pathfinding.RegisterAgent()
 
-func UpdatePathfindingAgent (id, tile_pos2d : Vector2, tile_size2d : Vector2):
-	pathfinding.UpdateAgent(id, int(tile_pos2d.x), int(tile_pos2d.y), int(tile_size2d.x), int(tile_size2d.y))
+func UpdatePathfindingAgent (id, tile_pos2d:Vector2, tile_size2d:Vector2):
+	pathfinding.UpdateAgent(id,
+		int(tile_pos2d.x),
+		int(tile_pos2d.y),
+		int(tile_size2d.x),
+		int(tile_size2d.y)
+	)
 	
 func GetNextPathfindingAgentPosition (id):
 	var tile_pos = pathfinding.GetNextAgentPosition(id)
@@ -295,14 +300,14 @@ func RemovePathfindingAgent (agent_id):
 #
 
 func GetStaticData ():
-	var wall_tile_positions = $Viewport/TileMap.get_used_cells()
+	var wall_tile_positions = $Viewport/WallTileMap.get_used_cells()
 
 	#
 	# interior tile positions
 	#
 
 	var interior_tile_positions = []
-	var rect = $Viewport/TileMap.get_used_rect()
+	var rect = $Viewport/WallTileMap.get_used_rect()
 	for x in range(rect.position.x, rect.size.x):
 		var interior = false
 		var prev_wall = false
@@ -311,11 +316,11 @@ func GetStaticData ():
 			var pos = Vector2(x, y)
 			var wall = false
 			for tilemap in [
-				$Viewport/Exit_Tilemaps/Left,
-				$Viewport/Exit_Tilemaps/Right,
-				$Viewport/Exit_Tilemaps/Up,
-				$Viewport/Exit_Tilemaps/Down,
-				$Viewport/TileMap
+				$Viewport/ExitTilemaps/Left,
+				$Viewport/ExitTilemaps/Right,
+				$Viewport/ExitTilemaps/Up,
+				$Viewport/ExitTilemaps/Down,
+				$Viewport/WallTileMap
 			]:
 				if tilemap.get_used_cells().has(pos):
 					if prev_wall:
@@ -338,10 +343,10 @@ func GetStaticData ():
 	for dir in ALMain.Dir.values():
 		var has_exit
 		match dir:
-			ALMain.Dir.LEFT : has_exit = not $Viewport/Exit_Tilemaps/Left .get_used_cells().empty()
-			ALMain.Dir.RIGHT: has_exit = not $Viewport/Exit_Tilemaps/Right.get_used_cells().empty()
-			ALMain.Dir.UP   : has_exit = not $Viewport/Exit_Tilemaps/Up   .get_used_cells().empty()
-			ALMain.Dir.DOWN : has_exit = not $Viewport/Exit_Tilemaps/Down .get_used_cells().empty()
+			ALMain.Dir.LEFT : has_exit = not $Viewport/ExitTilemaps/Left .get_used_cells().empty()
+			ALMain.Dir.RIGHT: has_exit = not $Viewport/ExitTilemaps/Right.get_used_cells().empty()
+			ALMain.Dir.UP   : has_exit = not $Viewport/ExitTilemaps/Up   .get_used_cells().empty()
+			ALMain.Dir.DOWN : has_exit = not $Viewport/ExitTilemaps/Down .get_used_cells().empty()
 		if has_exit:
 			possible_exit_dirs.append(dir)
 	
@@ -350,7 +355,7 @@ func GetStaticData ():
 	#
 	
 	var chunk_positions = []
-	for pos in $Viewport/TileMap.get_used_cells():
+	for pos in $Viewport/WallTileMap.get_used_cells():
 		var chunk_pos = Get2DTileToChunkPosition(pos)
 		if not chunk_pos in chunk_positions:
 			chunk_positions.append(chunk_pos)
@@ -365,7 +370,7 @@ func GetStaticData ():
 		for dir in ALMain.Dir.values():
 			chunk_dir_exit_tile_positions[chunk_pos][dir] = []
 		
-	for tilemap in $Viewport/Exit_Tilemaps.get_children():
+	for tilemap in $Viewport/ExitTilemaps.get_children():
 		var dir = get_exit_tilemap_dir(tilemap)
 		for tile_pos in tilemap.get_used_cells():
 			var chunk_pos = Get2DTileToChunkPosition(tile_pos)
@@ -379,7 +384,7 @@ func GetStaticData ():
 	var possible_chunk_exit_dirs = {}
 	for chunk_pos in chunk_positions:
 		possible_chunk_exit_dirs[chunk_pos] = []
-	for tilemap in $Viewport/Exit_Tilemaps.get_children():
+	for tilemap in $Viewport/ExitTilemaps.get_children():
 		var dir = get_exit_tilemap_dir(tilemap)
 		for tile_pos in tilemap.get_used_cells():
 			var chunk_pos = Get2DTileToChunkPosition(tile_pos)

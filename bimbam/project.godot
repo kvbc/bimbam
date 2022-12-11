@@ -21,6 +21,7 @@ ALHUD="*res://Scenes/AL_HUD.tscn"
 ALUtil="*res://Scripts/AL_Util.gd"
 ALPauseMenu="*res://Scenes/AL_PauseMenu.tscn"
 ALDebug="*res://Scenes/AL_Debug.tscn"
+ALDebugConsole="*res://Scenes/AL_DebugConsole.tscn"
 
 [debug]
 

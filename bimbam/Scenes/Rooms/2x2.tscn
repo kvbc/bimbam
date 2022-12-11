@@ -1,11 +1,10 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://Assets/tileset.tres" type="TileSet" id=1]
 [ext_resource path="res://Scripts/Room.gd" type="Script" id=2]
 [ext_resource path="res://Assets/tileset_exits.tres" type="TileSet" id=3]
 [ext_resource path="res://Dumpster.obj" type="ArrayMesh" id=4]
 [ext_resource path="res://Scripts/Room/Dumpster.gd" type="Script" id=5]
-[ext_resource path="res://Assets/floor_tileset.tres" type="TileSet" id=6]
 
 [sub_resource type="ViewportTexture" id=3]
 viewport_path = NodePath("Viewport")
@@ -19,15 +18,11 @@ extents = Vector3( 0.522678, 0.470461, 1.25254 )
 [node name="Node2D" type="Spatial"]
 script = ExtResource( 2 )
 
-[node name="FloorTileMap" type="TileMap" parent="."]
-tile_set = ExtResource( 6 )
-format = 1
-
 [node name="Viewport" type="Viewport" parent="."]
 size = Vector2( 1280, 1280 )
 transparent_bg = true
 
-[node name="TileMap" type="TileMap" parent="Viewport"]
+[node name="WallTileMap" type="TileMap" parent="Viewport"]
 tile_set = ExtResource( 1 )
 collision_layer = 3
 collision_mask = 3
@@ -108,27 +103,27 @@ position = Vector2( 989, 141 )
 [node name="2" type="Position2D" parent="Viewport/EnemySpawns/Down/Crackhead"]
 position = Vector2( 127, 138 )
 
-[node name="Exit_Tilemaps" type="Node2D" parent="Viewport"]
+[node name="ExitTilemaps" type="Node2D" parent="Viewport"]
 
-[node name="Left" type="TileMap" parent="Viewport/Exit_Tilemaps"]
+[node name="Left" type="TileMap" parent="Viewport/ExitTilemaps"]
 self_modulate = Color( 0, 1, 0.109804, 1 )
 tile_set = ExtResource( 3 )
 format = 1
 tile_data = PoolIntArray( 262144, 0, 0, 327680, 0, 0, 917504, 0, 0, 983040, 0, 0 )
 
-[node name="Up" type="TileMap" parent="Viewport/Exit_Tilemaps"]
+[node name="Up" type="TileMap" parent="Viewport/ExitTilemaps"]
 self_modulate = Color( 1, 0, 0, 1 )
 tile_set = ExtResource( 3 )
 format = 1
 tile_data = PoolIntArray( 4, 0, 0, 5, 0, 0, 14, 0, 0, 15, 0, 0 )
 
-[node name="Right" type="TileMap" parent="Viewport/Exit_Tilemaps"]
+[node name="Right" type="TileMap" parent="Viewport/ExitTilemaps"]
 self_modulate = Color( 0.941176, 0.705882, 0.0784314, 1 )
 tile_set = ExtResource( 3 )
 format = 1
 tile_data = PoolIntArray( 262163, 0, 0, 327699, 0, 0, 917523, 0, 0, 983059, 0, 0 )
 
-[node name="Down" type="TileMap" parent="Viewport/Exit_Tilemaps"]
+[node name="Down" type="TileMap" parent="Viewport/ExitTilemaps"]
 self_modulate = Color( 0.968627, 0, 1, 1 )
 tile_set = ExtResource( 3 )
 format = 1

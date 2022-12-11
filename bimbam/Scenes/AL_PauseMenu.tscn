@@ -22,6 +22,7 @@ script = ExtResource( 3 )
 [node name="Control" type="Control" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 1
 
 [node name="Background" type="TextureRect" parent="Control"]
 margin_left = -204.0
@@ -47,9 +48,6 @@ margin_top = 474.0
 margin_right = 684.0
 margin_bottom = 674.0
 rect_min_size = Vector2( 0, 200 )
-focus_neighbour_bottom = NodePath("../Resume")
-focus_next = NodePath("../Resume")
-focus_mode = 2
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
 custom_fonts/font = SubResource( 1 )
 text = "SETTINGS"
@@ -60,11 +58,6 @@ margin_top = 678.0
 margin_right = 684.0
 margin_bottom = 878.0
 rect_min_size = Vector2( 0, 200 )
-focus_neighbour_top = NodePath("../Settings")
-focus_neighbour_bottom = NodePath("../Exit")
-focus_next = NodePath("../Exit")
-focus_previous = NodePath("../Settings")
-focus_mode = 2
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
 custom_fonts/font = SubResource( 1 )
 text = "RESUME"
@@ -75,9 +68,6 @@ margin_top = 882.0
 margin_right = 684.0
 margin_bottom = 1082.0
 rect_min_size = Vector2( 0, 200 )
-focus_neighbour_top = NodePath("../Resume")
-focus_previous = NodePath("../Resume")
-focus_mode = 2
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
 custom_fonts/font = SubResource( 1 )
 text = "EXIT"
@@ -86,8 +76,9 @@ align = 1
 [node name="Settings" type="Control" parent="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 1
 
-[node name="TextureRect" type="TextureRect" parent="Control/Settings"]
+[node name="Background" type="TextureRect" parent="Control/Settings"]
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -145,7 +136,6 @@ margin_left = 555.0
 margin_right = 700.0
 margin_bottom = 58.0
 rect_min_size = Vector2( 0, 50 )
-focus_mode = 2
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
 custom_fonts/font = SubResource( 2 )
 text = "value"

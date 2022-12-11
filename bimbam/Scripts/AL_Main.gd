@@ -28,6 +28,7 @@ const MINIMAP_ZOOM_SENSITIVITY = 1
 #
 
 enum SettingType {
+	SOUNDS,
 	SHOW_ROOM_CHUNKS,
 	SHOW_ROOM_PATHFINDING,
 	SHOW_ROOM_PROP_BOUNDS,
@@ -161,7 +162,7 @@ var current_room_scene : Node = null
 var player = null
 var is_paused = false
 var settings = {} # SettingType -> value
-var physics_layers = []
+var physics_layer_names = []
 var enemy_data = {
 	EnemyType.MENEL    : EnemyData.new(5, 0.5, 0.0, 1),
 	EnemyType.CRACKHEAD: EnemyData.new(5, 0.5, 0.5, 1),
@@ -269,7 +270,7 @@ func on_player_damaged ():
 func _ready ():
 	for i in range(1, 32):
 		var layer_name = ProjectSettings.get_setting("layer_names/3d_physics/layer_" + str(i))
-		physics_layers.append(layer_name)
+		physics_layer_names.append(layer_name)
 
 	# auto-generate a list of room types
 	# based on filenames of all the room scenes
@@ -315,7 +316,6 @@ func _ready ():
 	expand_room(map)
 	ALHUD.Init()
 	set_room_as_current_scene(map)
-	
 	ALHUD.GetHPDisplay().Init(PLAYER_MAX_HP)
 	
 	for setting_type in GetSettingTypes():
@@ -335,7 +335,7 @@ func GetMousePosition ():
 	return get_viewport().get_mouse_position()
 
 func GetPhysicsLayerIdx (layer_name:String) -> int:
-	return physics_layers.find(layer_name)
+	return physics_layer_names.find(layer_name)
 
 func Get3DtoScreenPosition (pos3d: Vector3) -> Vector2:
 	if pos3d == Vector3.ZERO:
@@ -380,12 +380,18 @@ func SetSetting (setting_type, value):
 				ALHUD.GetFPSLabel().Show()
 			else:
 				ALHUD.GetFPSLabel().Hide()
+		SettingType.SOUNDS:
+			if value == "on":
+				AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), false)
+			else:
+				AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), true)
 
 func GetSettingTypes ():
 	return range(SettingType.size())
 
 func GetSettingName (setting_type):
 	return {
+		SettingType.SOUNDS                   : "sounds",
 		SettingType.SHOW_ROOM_CHUNKS         : "show room chunks",
 		SettingType.SHOW_ROOM_PATHFINDING    : "show room pathfinding",
 		SettingType.SHOW_ROOM_PROP_BOUNDS    : "show room prop bounds",
@@ -400,6 +406,7 @@ func GetSettingName (setting_type):
 
 func GetSettingValues (setting_type):
 	return {
+		SettingType.SOUNDS                   : ["on", "off"],
 		SettingType.SHOW_ROOM_CHUNKS         : ["no", "yes"],
 		SettingType.SHOW_ROOM_PATHFINDING    : ["no", "yes"],
 		SettingType.SHOW_ROOM_PROP_BOUNDS    : ["no", "yes"],
@@ -422,6 +429,7 @@ func Pause ():
 func Unpause ():
 	get_tree().paused = false
 	is_paused = false
+	ALPauseMenu.Unpause()
 
 func GetCurrentRoomScene  ()         : return current_room_scene
 func GetRoomTilesPerChunk ()         : return room_tiles_per_chunk
